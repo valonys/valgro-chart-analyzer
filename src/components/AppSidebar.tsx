@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Zap, Sparkles } from 'lucide-react';
 import { AIModel } from '@/types/chart-analysis';
+import { ValonyLabsLogo } from './ValonyLabsLogo';
 
 interface AppSidebarProps {
   selectedModel: AIModel;
@@ -37,7 +38,7 @@ export const AppSidebar = ({
       {/* Clean Header */}
       <div className="p-6 border-b border-sidebar-border">
         <div className="flex items-center space-x-3">
-          <img src="/valonylabs-logo.png" alt="ValonyLabs" className="w-8 h-8" />
+          <ValonyLabsLogo size={32} className="text-sidebar-foreground" />
           <div>
             <h2 className="text-lg font-semibold text-sidebar-foreground">ValGro</h2>
             <p className="text-xs text-muted-foreground">AI Assistant</p>

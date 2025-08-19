@@ -4,9 +4,10 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Send, Bot, User, Trash2, Brain, Mic, ArrowUp } from 'lucide-react';
+import { Send, Bot, User, Trash2, Brain, Mic, ArrowUp, Paperclip } from 'lucide-react';
 import { ChatMessage, AIModel } from '@/types/chart-analysis';
 import { format } from 'date-fns';
+import { ValonyLabsLogo } from './ValonyLabsLogo';
 
 interface ChatInterfaceProps {
   chatHistory: ChatMessage[];
@@ -59,7 +60,7 @@ export const ChatInterface = ({
       <header className="border-b border-border px-6 py-4">
         <div className="flex items-center justify-between max-w-4xl mx-auto">
           <div className="flex items-center space-x-4">
-            <img src="/valonylabs-logo.png" alt="ValonyLabs" className="w-8 h-8" />
+            <ValonyLabsLogo size={32} className="text-foreground" />
             <h1 className="text-xl font-semibold text-foreground">ValGro Analyzer</h1>
           </div>
           
@@ -97,7 +98,7 @@ export const ChatInterface = ({
             <div className="flex items-center justify-center h-full">
               <div className="text-center space-y-6 max-w-md">
                 <div className="flex items-center justify-center space-x-3 mb-8">
-                  <img src="/valonylabs-logo.png" alt="ValonyLabs" className="w-12 h-12" />
+                  <ValonyLabsLogo size={48} className="text-foreground" />
                   <h1 className="text-3xl font-bold text-foreground">ValonyLabs</h1>
                 </div>
                 <p className="text-muted-foreground text-lg">
@@ -173,7 +174,23 @@ export const ChatInterface = ({
         <div className="border-t border-border p-6">
           <div className="max-w-4xl mx-auto">
             <div className="relative flex items-center bg-input rounded-lg border border-border">
-              <div className="flex items-center pl-4">
+              <div className="flex items-center pl-4 space-x-3">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  id="file-upload"
+                  onChange={(e) => {
+                    // Handle file upload logic here
+                    console.log('File selected:', e.target.files?.[0]);
+                  }}
+                />
+                <label
+                  htmlFor="file-upload"
+                  className="cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Paperclip className="w-5 h-5" />
+                </label>
                 <Mic className="w-5 h-5 text-muted-foreground hover:text-foreground cursor-pointer transition-colors" />
               </div>
               
