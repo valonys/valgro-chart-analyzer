@@ -33,38 +33,35 @@ export const AppSidebar = ({
   isProcessing 
 }: AppSidebarProps) => {
   return (
-    <div className="w-80 h-screen glass-card border-r border-sidebar-border flex flex-col relative overflow-hidden">
-      {/* Premium Header */}
-      <div className="p-6 border-b border-sidebar-border/50 relative">
+    <div className="w-80 h-screen bg-sidebar border-r border-sidebar-border flex flex-col">
+      {/* Clean Header */}
+      <div className="p-6 border-b border-sidebar-border">
         <div className="flex items-center space-x-3">
-          <img src="/valonylabs-logo.png" alt="ValonyLabs" className="w-10 h-10 logo-glow" />
+          <img src="/valonylabs-logo.png" alt="ValonyLabs" className="w-8 h-8" />
           <div>
-            <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">ValGro</h2>
+            <h2 className="text-lg font-semibold text-sidebar-foreground">ValGro</h2>
             <p className="text-xs text-muted-foreground">AI Assistant</p>
           </div>
         </div>
       </div>
 
-      {/* Premium Model Selection */}
+      {/* Model Selection */}
       <div className="p-6 flex-1">
-        <div className="space-y-6">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg ai-gradient flex items-center justify-center">
-              <Zap className="w-4 h-4 text-white" />
-            </div>
-            <h3 className="font-semibold text-sidebar-foreground">AI Models</h3>
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <Zap className="w-4 h-4 text-sidebar-foreground" />
+            <h3 className="font-medium text-sidebar-foreground">AI Models</h3>
           </div>
           
           <div className="space-y-3">
-            {models.map((model, index) => (
+            {models.map((model) => (
               <label
                 key={model.id}
-                className={`group flex items-center space-x-4 p-4 rounded-xl cursor-pointer transition-all duration-300 hover:scale-[1.02] ${
+                className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-colors ${
                   selectedModel.id === model.id
-                    ? 'glass-card ring-2 ring-primary/50'
-                    : 'glass-card hover:bg-sidebar-accent/30'
+                    ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                    : 'hover:bg-sidebar-accent/50'
                 }`}
-                style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <input
                   type="radio"
@@ -74,33 +71,26 @@ export const AppSidebar = ({
                   onChange={() => onModelSelect(model)}
                   className="sr-only"
                 />
-                <div className={`relative w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
+                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
                   selectedModel.id === model.id
-                    ? 'border-primary bg-primary shadow-lg'
-                    : 'border-muted-foreground group-hover:border-primary/50'
+                    ? 'border-sidebar-foreground bg-sidebar-foreground'
+                    : 'border-muted-foreground'
                 }`}>
                   {selectedModel.id === model.id && (
-                    <div className="w-2.5 h-2.5 rounded-full bg-white animate-scale-in"></div>
-                  )}
-                  {selectedModel.id === model.id && (
-                    <div className="absolute inset-0 rounded-full bg-primary animate-ping opacity-30"></div>
+                    <div className="w-2 h-2 rounded-full bg-sidebar-background"></div>
                   )}
                 </div>
                 <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <span className="font-semibold text-sm text-sidebar-foreground">{model.name}</span>
+                  <div className="flex items-center space-x-2">
+                    <span className="font-medium text-sm text-sidebar-foreground">{model.name}</span>
                     <Badge 
                       variant={model.tier === 'premium' ? 'default' : 'secondary'}
-                      className={`text-xs px-2 py-1 ${
-                        model.tier === 'premium' 
-                          ? 'ai-gradient text-white border-0' 
-                          : 'bg-muted/50 text-muted-foreground'
-                      }`}
+                      className="text-xs px-2 py-0.5"
                     >
                       {model.tier}
                     </Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{model.description}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{model.description}</p>
                 </div>
               </label>
             ))}
@@ -108,38 +98,25 @@ export const AppSidebar = ({
         </div>
       </div>
 
-      {/* Premium Stats Dashboard */}
-      <div className="p-6 border-t border-sidebar-border/50">
-        <div className="space-y-6">
-          <div className="flex items-center space-x-3">
-            <div className="w-6 h-6 rounded-lg bg-accent/20 flex items-center justify-center">
-              <span className="text-accent text-xs">📊</span>
+      {/* Stats */}
+      <div className="p-6 border-t border-sidebar-border">
+        <div className="space-y-4">
+          <h3 className="font-medium text-sidebar-foreground text-sm">Activity</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-3 bg-sidebar-accent rounded-lg">
+              <div className="text-xs text-muted-foreground">Analyses</div>
+              <div className="text-lg font-semibold text-sidebar-foreground">{analysisCount}</div>
             </div>
-            <h3 className="font-semibold text-sidebar-foreground text-sm">Activity Dashboard</h3>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-3">
-            <div className="glass-card p-4 rounded-xl group hover:scale-105 transition-transform duration-300">
-              <div className="text-xs text-muted-foreground mb-1">Analyses</div>
-              <div className="text-2xl font-bold text-primary">{analysisCount}</div>
-              <div className="text-xs text-muted-foreground mt-1">Total completed</div>
-            </div>
-            <div className="glass-card p-4 rounded-xl group hover:scale-105 transition-transform duration-300">
-              <div className="text-xs text-muted-foreground mb-1">Messages</div>
-              <div className="text-2xl font-bold text-accent">{chatCount}</div>
-              <div className="text-xs text-muted-foreground mt-1">Conversations</div>
+            <div className="p-3 bg-sidebar-accent rounded-lg">
+              <div className="text-xs text-muted-foreground">Messages</div>
+              <div className="text-lg font-semibold text-sidebar-foreground">{chatCount}</div>
             </div>
           </div>
           
           {isProcessing && (
-            <div className="glass-card p-4 rounded-xl">
-              <div className="flex items-center space-x-3">
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
-                <div>
-                  <div className="text-xs font-medium text-sidebar-foreground">AI Processing</div>
-                  <div className="text-xs text-muted-foreground">Analyzing your request...</div>
-                </div>
-              </div>
+            <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+              <div className="animate-spin rounded-full h-3 w-3 border border-sidebar-foreground border-t-transparent"></div>
+              <span>Processing...</span>
             </div>
           )}
         </div>
