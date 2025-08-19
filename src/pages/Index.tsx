@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Bot, Sparkles, TrendingUp, Zap } from 'lucide-react';
+import { Sparkles, Zap } from 'lucide-react';
 import { useChartAnalysis } from '@/hooks/use-chart-analysis';
 import { ChatInterface } from '@/components/ChatInterface';
 import { AppSidebar } from '@/components/AppSidebar';
+import { ValonyLabsLogo } from '@/components/ValonyLabsLogo';
 
 const Index = () => {
   const {
@@ -31,12 +32,12 @@ const Index = () => {
         <Card className="w-full max-w-md border-0 bg-background/50 backdrop-blur-sm">
           <CardContent className="p-8">
             <div className="text-center space-y-4">
-              <div className="ai-gradient w-16 h-16 rounded-full flex items-center justify-center mx-auto">
-                <Bot className="h-8 w-8 text-white" />
+              <div className="flex justify-center mb-2">
+                <ValonyLabsLogo className="w-20 h-20" />
               </div>
               
               <div className="space-y-2">
-                <h1 className="text-2xl font-bold">Groq Insight</h1>
+                <h1 className="text-2xl font-bold">ValGro Analyzer</h1>
                 <p className="text-sm text-muted-foreground">
                   AI-Powered Chart Analysis
                 </p>

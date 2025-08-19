@@ -7,9 +7,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { MessageCircle, Send, Bot, User, Trash2, Brain } from 'lucide-react';
+import { Send, Bot, User, Trash2, Brain, Mic } from 'lucide-react';
 import { ChatMessage, AIModel } from '@/types/chart-analysis';
 import { format } from 'date-fns';
+import { ValonyLabsLogo } from '@/components/ValonyLabsLogo';
 
 interface ChatInterfaceProps {
   chatHistory: ChatMessage[];
@@ -62,10 +63,8 @@ export const ChatInterface = ({
       <header className="border-b border-border/50 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="ai-gradient w-8 h-8 rounded-lg flex items-center justify-center">
-              <MessageCircle className="w-4 h-4 text-white" />
-            </div>
-            <h1 className="text-xl font-semibold">AI Chat</h1>
+            <ValonyLabsLogo className="w-8 h-8" />
+            <h1 className="text-xl font-semibold">ValGro Analyzer</h1>
           </div>
           
           <div className="flex items-center space-x-3">
@@ -102,8 +101,8 @@ export const ChatInterface = ({
           {chatHistory.length === 0 && !streamingMessage ? (
             <div className="flex items-center justify-center h-full text-center">
               <div className="space-y-4 max-w-md">
-                <div className="ai-gradient w-20 h-20 rounded-full flex items-center justify-center mx-auto">
-                  <Bot className="h-10 w-10 text-white" />
+                <div className="flex justify-center mb-4">
+                  <ValonyLabsLogo className="w-24 h-24" />
                 </div>
                 <h2 className="text-2xl font-semibold">Start Your Analysis</h2>
                 <p className="text-muted-foreground">
@@ -176,24 +175,32 @@ export const ChatInterface = ({
         </ScrollArea>
         
         {/* Input Area */}
-        <div className="border-t border-border/50 p-6">
+        <div className="p-6 bg-muted/30">
           <div className="max-w-4xl mx-auto">
-            <div className="flex space-x-3">
+            <div className="relative flex items-center bg-background/80 backdrop-blur-sm rounded-2xl border border-border/50 shadow-lg">
+              <div className="flex items-center pl-4">
+                <Mic className="w-5 h-5 text-muted-foreground hover:text-primary cursor-pointer transition-colors" />
+              </div>
+              
               <Input
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Ask me anything about charts and data..."
+                placeholder="Ask anything..."
                 disabled={isProcessing}
-                className="flex-1 rounded-full border-border/50 focus:border-primary bg-background/50 backdrop-blur-sm"
+                className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 px-4 py-4 text-base placeholder:text-muted-foreground/70"
               />
-              <Button
-                onClick={handleSend}
-                disabled={!message.trim() || isProcessing}
-                className="ai-gradient text-white hover:opacity-90 rounded-full px-6"
-              >
-                <Send className="w-4 h-4" />
-              </Button>
+              
+              <div className="flex items-center pr-2 space-x-2">
+                <Button
+                  onClick={handleSend}
+                  disabled={!message.trim() || isProcessing}
+                  size="icon"
+                  className="ai-gradient text-white hover:opacity-90 rounded-full w-10 h-10 shadow-md"
+                >
+                  <Send className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>

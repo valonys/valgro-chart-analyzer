@@ -2,8 +2,9 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Bot, Zap, Sparkles } from 'lucide-react';
+import { Zap, Sparkles } from 'lucide-react';
 import { AIModel } from '@/types/chart-analysis';
+import { ValonyLabsLogo } from '@/components/ValonyLabsLogo';
 
 interface AppSidebarProps {
   selectedModel: AIModel;
@@ -22,11 +23,15 @@ export const AppSidebar = ({
 }: AppSidebarProps) => {
   return (
     <aside className="w-80 h-screen border-r border-border bg-card/30 p-6 space-y-6">
+      {/* Logo */}
+      <div className="flex items-center justify-center p-4">
+        <ValonyLabsLogo className="w-16 h-16" />
+      </div>
+
       {/* Model Selection */}
       <Card className="border-0 bg-background/50 backdrop-blur-sm">
         <CardHeader className="pb-4">
-          <CardTitle className="text-lg font-semibold flex items-center">
-            <Bot className="w-5 h-5 mr-2 text-primary" />
+          <CardTitle className="text-lg font-semibold">
             AI Model
           </CardTitle>
         </CardHeader>
