@@ -16,6 +16,7 @@ interface ChatInterfaceProps {
   selectedModel: AIModel;
   isProcessing: boolean;
   onSendMessage: (message: string, useRAG: boolean) => void;
+  onStreamMessage: (message: string, useRAG: boolean, onToken: (token: string) => void) => void;
   onClearHistory: () => void;
 }
 
@@ -23,11 +24,13 @@ export const ChatInterface = ({
   chatHistory, 
   selectedModel, 
   isProcessing, 
-  onSendMessage, 
+  onSendMessage,
+  onStreamMessage, 
   onClearHistory 
 }: ChatInterfaceProps) => {
   const [message, setMessage] = useState('');
   const [useRAG, setUseRAG] = useState(true);
+  const [streamingMessage, setStreamingMessage] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,7 +41,10 @@ export const ChatInterface = ({
 
   const handleSend = () => {
     if (message.trim()) {
-      onSendMessage(message, useRAG);
+      setStreamingMessage('');
+      onStreamMessage(message, useRAG, (token: string) => {
+        setStreamingMessage(prev => prev + token);
+      });
       setMessage('');
     }
   };
@@ -51,17 +57,31 @@ export const ChatInterface = ({
   };
 
   return (
-    <Card className="h-[600px] flex flex-col card-shadow">
-      <CardHeader className="pb-4">
+    <div className="h-screen flex flex-col bg-background">
+      {/* Minimal Header */}
+      <header className="border-b border-border/50 p-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center">
-            <MessageCircle className="w-5 h-5 mr-2 text-primary" />
-            AI Chat Assistant
-          </CardTitle>
-          <div className="flex items-center space-x-2">
-            <Badge variant="secondary" className="ai-gradient text-white border-0">
-              {selectedModel === 'scout' ? 'Scout' : 'Maverick'}
-            </Badge>
+          <div className="flex items-center space-x-3">
+            <div className="ai-gradient w-8 h-8 rounded-lg flex items-center justify-center">
+              <MessageCircle className="w-4 h-4 text-white" />
+            </div>
+            <h1 className="text-xl font-semibold">AI Chat</h1>
+          </div>
+          
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="rag-mode"
+                checked={useRAG}
+                onCheckedChange={setUseRAG}
+                className="data-[state=checked]:bg-primary"
+              />
+              <Label htmlFor="rag-mode" className="text-sm font-medium">
+                <Brain className="w-3 h-3 inline mr-1" />
+                RAG
+              </Label>
+            </div>
+            
             {chatHistory.length > 0 && (
               <Button
                 variant="ghost"
@@ -74,41 +94,25 @@ export const ChatInterface = ({
             )}
           </div>
         </div>
-        
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="rag-mode"
-            checked={useRAG}
-            onCheckedChange={setUseRAG}
-          />
-          <Label htmlFor="rag-mode" className="text-sm">
-            <Brain className="w-4 h-4 inline mr-1" />
-            RAG Context Mode
-          </Label>
-          {useRAG && (
-            <Badge variant="outline" className="text-xs">
-              Enhanced Context
-            </Badge>
-          )}
-        </div>
-      </CardHeader>
+      </header>
       
-      <CardContent className="flex-1 flex flex-col p-0">
-        <ScrollArea className="flex-1 px-6" ref={scrollAreaRef}>
-          {chatHistory.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-center space-y-4">
-              <div className="space-y-2">
-                <div className="ai-gradient w-16 h-16 rounded-full flex items-center justify-center mx-auto ai-glow">
-                  <Bot className="h-8 w-8 text-white" />
+      {/* Chat Area */}
+      <div className="flex-1 flex flex-col">
+        <ScrollArea className="flex-1 p-6" ref={scrollAreaRef}>
+          {chatHistory.length === 0 && !streamingMessage ? (
+            <div className="flex items-center justify-center h-full text-center">
+              <div className="space-y-4 max-w-md">
+                <div className="ai-gradient w-20 h-20 rounded-full flex items-center justify-center mx-auto">
+                  <Bot className="h-10 w-10 text-white" />
                 </div>
-                <h3 className="text-lg font-semibold">Start a Conversation</h3>
-                <p className="text-muted-foreground max-w-md">
-                  Ask questions about your chart analysis or discuss insights with the AI assistant.
+                <h2 className="text-2xl font-semibold">Start Your Analysis</h2>
+                <p className="text-muted-foreground">
+                  Ask questions about charts, data patterns, or get insights from your visualizations.
                 </p>
               </div>
             </div>
           ) : (
-            <div className="space-y-4 pb-4">
+            <div className="space-y-6 max-w-4xl mx-auto">
               {chatHistory.map((msg) => (
                 <div
                   key={msg.id}
@@ -117,27 +121,20 @@ export const ChatInterface = ({
                   }`}
                 >
                   {msg.role === 'assistant' && (
-                    <div className="ai-gradient w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ai-glow">
+                    <div className="ai-gradient w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0">
                       <Bot className="h-4 w-4 text-white" />
                     </div>
                   )}
                   
                   <div
-                    className={`max-w-[80%] rounded-lg p-3 ${
+                    className={`max-w-[75%] rounded-2xl px-4 py-3 ${
                       msg.role === 'user'
                         ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted'
+                        : 'bg-muted/50 border border-border/50'
                     }`}
                   >
-                    <p className="text-sm leading-relaxed">{msg.content}</p>
-                    {msg.imageUrl && (
-                      <img
-                        src={msg.imageUrl}
-                        alt="Chart reference"
-                        className="mt-2 max-w-full h-32 object-contain rounded border"
-                      />
-                    )}
-                    <p className="text-xs opacity-70 mt-2">
+                    <p className="leading-relaxed">{msg.content}</p>
+                    <p className="text-xs opacity-60 mt-2">
                       {format(msg.timestamp, 'HH:mm')}
                     </p>
                   </div>
@@ -150,15 +147,26 @@ export const ChatInterface = ({
                 </div>
               ))}
               
-              {isProcessing && (
+              {streamingMessage && (
                 <div className="flex items-start space-x-3 justify-start">
-                  <div className="ai-gradient w-8 h-8 rounded-full flex items-center justify-center animate-pulse-glow">
+                  <div className="ai-gradient w-8 h-8 rounded-full flex items-center justify-center animate-pulse">
                     <Bot className="h-4 w-4 text-white" />
                   </div>
-                  <div className="bg-muted rounded-lg p-3 max-w-[80%]">
+                  <div className="max-w-[75%] rounded-2xl px-4 py-3 bg-muted/50 border border-border/50">
+                    <p className="leading-relaxed">{streamingMessage}<span className="animate-pulse">|</span></p>
+                  </div>
+                </div>
+              )}
+              
+              {isProcessing && !streamingMessage && (
+                <div className="flex items-start space-x-3 justify-start">
+                  <div className="ai-gradient w-8 h-8 rounded-full flex items-center justify-center animate-pulse">
+                    <Bot className="h-4 w-4 text-white" />
+                  </div>
+                  <div className="bg-muted/50 rounded-2xl px-4 py-3 border border-border/50">
                     <div className="flex items-center space-x-2">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                      <span className="text-sm text-muted-foreground">AI is thinking...</span>
+                      <span className="text-sm text-muted-foreground">Thinking...</span>
                     </div>
                   </div>
                 </div>
@@ -167,28 +175,29 @@ export const ChatInterface = ({
           )}
         </ScrollArea>
         
-        <Separator />
-        
-        <div className="p-4">
-          <div className="flex space-x-2">
-            <Input
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Ask about your chart analysis..."
-              disabled={isProcessing}
-              className="flex-1"
-            />
-            <Button
-              onClick={handleSend}
-              disabled={!message.trim() || isProcessing}
-              className="ai-gradient text-white hover:opacity-90"
-            >
-              <Send className="w-4 h-4" />
-            </Button>
+        {/* Input Area */}
+        <div className="border-t border-border/50 p-6">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex space-x-3">
+              <Input
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Ask me anything about charts and data..."
+                disabled={isProcessing}
+                className="flex-1 rounded-full border-border/50 focus:border-primary bg-background/50 backdrop-blur-sm"
+              />
+              <Button
+                onClick={handleSend}
+                disabled={!message.trim() || isProcessing}
+                className="ai-gradient text-white hover:opacity-90 rounded-full px-6"
+              >
+                <Send className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

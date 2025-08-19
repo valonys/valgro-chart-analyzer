@@ -150,6 +150,73 @@ export const useChartAnalysis = () => {
     }
   }, [state.selectedModel, state.uploadedImage?.url, toast]);
 
+  const sendStreamingChatMessage = useCallback(async (message: string, useRAG: boolean = false, onToken: (token: string) => void) => {
+    if (!message.trim()) return;
+
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: message,
+      timestamp: new Date(),
+      imageUrl: state.uploadedImage?.url
+    };
+
+    setState(prev => ({
+      ...prev,
+      chatHistory: [...prev.chatHistory, userMessage],
+      isProcessing: true
+    }));
+
+    try {
+      let context = '';
+      
+      if (useRAG) {
+        const similarDocs = vectorStore.searchSimilar(message, 3);
+        context = similarDocs.map(doc => doc.content).join('\n\n');
+      }
+
+      let fullResponse = '';
+      
+      for await (const token of aiService.streamChatResponse(message, state.selectedModel, context)) {
+        fullResponse += token;
+        onToken(token);
+      }
+      
+      const assistantMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: fullResponse,
+        timestamp: new Date()
+      };
+
+      // Add chat to vector store
+      const chatContent = `User: ${message}\nAssistant: ${fullResponse}`;
+      const document: Document = {
+        id: assistantMessage.id,
+        content: chatContent,
+        metadata: {
+          timestamp: new Date(),
+          chat_id: assistantMessage.id,
+          type: 'chat'
+        }
+      };
+      vectorStore.addDocument(document);
+
+      setState(prev => ({
+        ...prev,
+        chatHistory: [...prev.chatHistory, assistantMessage],
+        isProcessing: false
+      }));
+    } catch (error) {
+      setState(prev => ({ ...prev, isProcessing: false }));
+      toast({
+        title: "Chat error",
+        description: "Failed to get response",
+        variant: "destructive"
+      });
+    }
+  }, [state.selectedModel, state.uploadedImage?.url, toast]);
+
   const clearChatHistory = useCallback(() => {
     setState(prev => ({ ...prev, chatHistory: [] }));
   }, []);
@@ -166,6 +233,7 @@ export const useChartAnalysis = () => {
     uploadImage,
     analyzeChart,
     sendChatMessage,
+    sendStreamingChatMessage,
     clearChatHistory,
     clearAnalysisHistory
   };

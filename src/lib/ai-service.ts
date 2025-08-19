@@ -69,6 +69,23 @@ export class AIService {
       confidence: 0.80 + Math.random() * 0.20
     };
   }
+
+  async *streamChatResponse(message: string, model: AIModel, context?: string): AsyncGenerator<string, void, unknown> {
+    let prompt = message;
+    if (context) {
+      prompt = `Context: ${context}\n\nUser: ${message}`;
+    }
+    
+    const fullResponse = await this.simulateAICall(prompt, model);
+    const words = fullResponse.split(' ');
+    
+    // Stream words with realistic delays
+    for (let i = 0; i < words.length; i++) {
+      const word = words[i];
+      await new Promise(resolve => setTimeout(resolve, 50 + Math.random() * 100));
+      yield word + (i < words.length - 1 ? ' ' : '');
+    }
+  }
   
   async quickAnalysis(imageUrl: string, model: AIModel): Promise<string> {
     return this.simulateAICall(`Provide a quick analysis of this chart visualization`, model);
