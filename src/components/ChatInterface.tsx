@@ -10,7 +10,6 @@ import { Separator } from '@/components/ui/separator';
 import { Send, Bot, User, Trash2, Brain, Mic } from 'lucide-react';
 import { ChatMessage, AIModel } from '@/types/chart-analysis';
 import { format } from 'date-fns';
-import { ValonyLabsLogo } from '@/components/ValonyLabsLogo';
 
 interface ChatInterfaceProps {
   chatHistory: ChatMessage[];
@@ -57,13 +56,19 @@ export const ChatInterface = ({
     }
   };
 
+  const handleComboAction = (value: string) => {
+    if (value) {
+      setMessage(value);
+    }
+  };
+
   return (
-    <div className="h-screen flex flex-col bg-background">
+    <div className="h-screen flex flex-col bg-background font-['Tw_Cen_MT']">
       {/* Minimal Header */}
       <header className="border-b border-border/50 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <ValonyLabsLogo className="w-8 h-8" />
+            <img src="/valonylabs-logo.png" alt="ValonyLabs" className="w-8 h-8" />
             <h1 className="text-xl font-semibold">ValGro Analyzer</h1>
           </div>
           
@@ -100,14 +105,42 @@ export const ChatInterface = ({
         <ScrollArea className="flex-1 p-6" ref={scrollAreaRef}>
           {chatHistory.length === 0 && !streamingMessage ? (
             <div className="flex items-center justify-center h-full text-center">
-              <div className="space-y-4 max-w-md">
-                <div className="flex justify-center mb-4">
-                  <ValonyLabsLogo className="w-24 h-24" />
+              <div className="space-y-6 max-w-lg">
+                <div className="flex justify-center mb-6">
+                  <img src="/valonylabs-logo.png" alt="ValonyLabs" className="w-32 h-32" />
                 </div>
-                <h2 className="text-2xl font-semibold">Start Your Analysis</h2>
-                <p className="text-muted-foreground">
-                  Ask questions about charts, data patterns, or get insights from your visualizations.
-                </p>
+                
+                <div className="grid gap-3">
+                  <select 
+                    onChange={(e) => handleComboAction(e.target.value)}
+                    className="w-full p-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  >
+                    <option value="">Analyze chart trends and patterns</option>
+                    <option value="Identify upward/downward trends">Identify upward/downward trends</option>
+                    <option value="Detect seasonal patterns">Detect seasonal patterns</option>
+                    <option value="Find data anomalies">Find data anomalies</option>
+                  </select>
+                  
+                  <select 
+                    onChange={(e) => handleComboAction(e.target.value)}
+                    className="w-full p-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  >
+                    <option value="">Extract numerical insights</option>
+                    <option value="Find highest/lowest values">Find highest/lowest values</option>
+                    <option value="Calculate averages">Calculate averages</option>
+                    <option value="Identify correlations">Identify correlations</option>
+                  </select>
+                  
+                  <select 
+                    onChange={(e) => handleComboAction(e.target.value)}
+                    className="w-full p-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  >
+                    <option value="">Generate business insights</option>
+                    <option value="Strategic recommendations">Strategic recommendations</option>
+                    <option value="Future predictions">Future predictions</option>
+                    <option value="Comparative analysis">Comparative analysis</option>
+                  </select>
+                </div>
               </div>
             </div>
           ) : (

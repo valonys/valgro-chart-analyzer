@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Zap, Sparkles } from 'lucide-react';
 import { AIModel } from '@/types/chart-analysis';
-import { ValonyLabsLogo } from '@/components/ValonyLabsLogo';
 
 interface AppSidebarProps {
   selectedModel: AIModel;
@@ -25,7 +24,7 @@ export const AppSidebar = ({
     <aside className="w-80 h-screen border-r border-border bg-card/30 p-6 space-y-6">
       {/* Logo */}
       <div className="flex items-center justify-center p-4">
-        <ValonyLabsLogo className="w-16 h-16" />
+        <img src="/valonylabs-logo.png" alt="ValonyLabs" className="w-16 h-16" />
       </div>
 
       {/* Model Selection */}

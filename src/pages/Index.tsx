@@ -5,7 +5,6 @@ import { Sparkles, Zap } from 'lucide-react';
 import { useChartAnalysis } from '@/hooks/use-chart-analysis';
 import { ChatInterface } from '@/components/ChatInterface';
 import { AppSidebar } from '@/components/AppSidebar';
-import { ValonyLabsLogo } from '@/components/ValonyLabsLogo';
 
 const Index = () => {
   const {
@@ -33,7 +32,7 @@ const Index = () => {
           <CardContent className="p-8">
             <div className="text-center space-y-4">
               <div className="flex justify-center mb-2">
-                <ValonyLabsLogo className="w-20 h-20" />
+                <img src="/valonylabs-logo.png" alt="ValonyLabs" className="w-20 h-20" />
               </div>
               
               <div className="space-y-2">
