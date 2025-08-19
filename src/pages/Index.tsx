@@ -15,7 +15,8 @@ const Index = () => {
     setSelectedModel,
     sendChatMessage,
     sendStreamingChatMessage,
-    clearChatHistory
+    clearChatHistory,
+    uploadImage
   } = useChartAnalysis();
 
   const [showWelcome, setShowWelcome] = useState(true);
@@ -77,6 +78,7 @@ const Index = () => {
           onSendMessage={sendChatMessage}
           onStreamMessage={sendStreamingChatMessage}
           onClearHistory={clearChatHistory}
+          onImageUpload={uploadImage}
         />
       </main>
     </div>

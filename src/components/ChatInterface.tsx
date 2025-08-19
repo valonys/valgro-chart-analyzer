@@ -16,6 +16,7 @@ interface ChatInterfaceProps {
   onSendMessage: (message: string, useRAG: boolean) => void;
   onStreamMessage: (message: string, useRAG: boolean, onToken: (token: string) => void) => void;
   onClearHistory: () => void;
+  onImageUpload: (file: File) => void;
 }
 
 export const ChatInterface = ({ 
@@ -24,7 +25,8 @@ export const ChatInterface = ({
   isProcessing, 
   onSendMessage,
   onStreamMessage, 
-  onClearHistory 
+  onClearHistory,
+  onImageUpload
 }: ChatInterfaceProps) => {
   const [message, setMessage] = useState('');
   const [useRAG, setUseRAG] = useState(true);
@@ -181,8 +183,10 @@ export const ChatInterface = ({
                   className="hidden"
                   id="file-upload"
                   onChange={(e) => {
-                    // Handle file upload logic here
-                    console.log('File selected:', e.target.files?.[0]);
+                    const file = e.target.files?.[0];
+                    if (file && file.type.startsWith('image/')) {
+                      onImageUpload(file);
+                    }
                   }}
                 />
                 <label
