@@ -105,41 +105,87 @@ export const ChatInterface = ({
         <ScrollArea className="flex-1 p-6" ref={scrollAreaRef}>
           {chatHistory.length === 0 && !streamingMessage ? (
             <div className="flex items-center justify-center h-full text-center">
-              <div className="space-y-6 max-w-lg">
-                <div className="flex justify-center mb-6">
-                  <img src="/valonylabs-logo.png" alt="ValonyLabs" className="w-32 h-32" />
+              <div className="space-y-8 max-w-2xl">
+                <div className="flex items-center justify-center space-x-4 mb-8">
+                  <img src="/valonylabs-logo.png" alt="ValonyLabs" className="w-12 h-12" />
+                  <h1 className="text-3xl font-bold text-foreground">ValonyLabs</h1>
                 </div>
                 
-                <div className="grid gap-3">
-                  <select 
-                    onChange={(e) => handleComboAction(e.target.value)}
-                    className="w-full p-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  >
-                    <option value="">Analyze chart trends and patterns</option>
-                    <option value="Identify upward/downward trends">Identify upward/downward trends</option>
-                    <option value="Detect seasonal patterns">Detect seasonal patterns</option>
-                    <option value="Find data anomalies">Find data anomalies</option>
-                  </select>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-muted-foreground mb-3">Chart Analysis</h3>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleComboAction("Identify upward/downward trends")}
+                      className="w-full justify-start h-auto py-3 px-4 text-left bg-card/50 hover:bg-card/80 border-border/50"
+                    >
+                      <div className="text-sm">Identify upward/downward trends</div>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleComboAction("Detect seasonal patterns")}
+                      className="w-full justify-start h-auto py-3 px-4 text-left bg-card/50 hover:bg-card/80 border-border/50"
+                    >
+                      <div className="text-sm">Detect seasonal patterns</div>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleComboAction("Find data anomalies")}
+                      className="w-full justify-start h-auto py-3 px-4 text-left bg-card/50 hover:bg-card/80 border-border/50"
+                    >
+                      <div className="text-sm">Find data anomalies</div>
+                    </Button>
+                  </div>
                   
-                  <select 
-                    onChange={(e) => handleComboAction(e.target.value)}
-                    className="w-full p-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  >
-                    <option value="">Extract numerical insights</option>
-                    <option value="Find highest/lowest values">Find highest/lowest values</option>
-                    <option value="Calculate averages">Calculate averages</option>
-                    <option value="Identify correlations">Identify correlations</option>
-                  </select>
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-muted-foreground mb-3">Numerical Insights</h3>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleComboAction("Find highest/lowest values")}
+                      className="w-full justify-start h-auto py-3 px-4 text-left bg-card/50 hover:bg-card/80 border-border/50"
+                    >
+                      <div className="text-sm">Find highest/lowest values</div>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleComboAction("Calculate averages")}
+                      className="w-full justify-start h-auto py-3 px-4 text-left bg-card/50 hover:bg-card/80 border-border/50"
+                    >
+                      <div className="text-sm">Calculate averages</div>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleComboAction("Identify correlations")}
+                      className="w-full justify-start h-auto py-3 px-4 text-left bg-card/50 hover:bg-card/80 border-border/50"
+                    >
+                      <div className="text-sm">Identify correlations</div>
+                    </Button>
+                  </div>
                   
-                  <select 
-                    onChange={(e) => handleComboAction(e.target.value)}
-                    className="w-full p-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  >
-                    <option value="">Generate business insights</option>
-                    <option value="Strategic recommendations">Strategic recommendations</option>
-                    <option value="Future predictions">Future predictions</option>
-                    <option value="Comparative analysis">Comparative analysis</option>
-                  </select>
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-muted-foreground mb-3">Business Insights</h3>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleComboAction("Strategic recommendations")}
+                      className="w-full justify-start h-auto py-3 px-4 text-left bg-card/50 hover:bg-card/80 border-border/50"
+                    >
+                      <div className="text-sm">Strategic recommendations</div>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleComboAction("Future predictions")}
+                      className="w-full justify-start h-auto py-3 px-4 text-left bg-card/50 hover:bg-card/80 border-border/50"
+                    >
+                      <div className="text-sm">Future predictions</div>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleComboAction("Comparative analysis")}
+                      className="w-full justify-start h-auto py-3 px-4 text-left bg-card/50 hover:bg-card/80 border-border/50"
+                    >
+                      <div className="text-sm">Comparative analysis</div>
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
