@@ -1,4 +1,4 @@
-import { AIModel, AIResponse, AnalysisResult } from '@/types/chart-analysis';
+import { AIModelType, AIResponse, AnalysisResult } from '@/types/chart-analysis';
 
 // Predefined analysis questions for chart analysis
 const ANALYSIS_QUESTIONS = [
@@ -13,7 +13,7 @@ const ANALYSIS_QUESTIONS = [
 
 // Mock AI service to simulate Groq API calls
 export class AIService {
-  private async simulateAICall(prompt: string, model: AIModel): Promise<string> {
+  private async simulateAICall(prompt: string, model: AIModelType): Promise<string> {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
     
@@ -39,7 +39,7 @@ export class AIService {
     return chatResponses[Math.floor(Math.random() * chatResponses.length)];
   }
   
-  async analyzeChart(imageUrl: string, model: AIModel): Promise<AnalysisResult[]> {
+  async analyzeChart(imageUrl: string, model: AIModelType): Promise<AnalysisResult[]> {
     const results: AnalysisResult[] = [];
     
     for (const question of ANALYSIS_QUESTIONS) {
@@ -54,7 +54,7 @@ export class AIService {
     return results;
   }
   
-  async chatWithAI(message: string, model: AIModel, context?: string): Promise<AIResponse> {
+  async chatWithAI(message: string, model: AIModelType, context?: string): Promise<AIResponse> {
     let prompt = message;
     if (context) {
       prompt = `Context: ${context}\n\nUser: ${message}`;
@@ -70,7 +70,7 @@ export class AIService {
     };
   }
 
-  async *streamChatResponse(message: string, model: AIModel, context?: string): AsyncGenerator<string, void, unknown> {
+  async *streamChatResponse(message: string, model: AIModelType, context?: string): AsyncGenerator<string, void, unknown> {
     let prompt = message;
     if (context) {
       prompt = `Context: ${context}\n\nUser: ${message}`;
@@ -87,7 +87,7 @@ export class AIService {
     }
   }
   
-  async quickAnalysis(imageUrl: string, model: AIModel): Promise<string> {
+  async quickAnalysis(imageUrl: string, model: AIModelType): Promise<string> {
     return this.simulateAICall(`Provide a quick analysis of this chart visualization`, model);
   }
 }

@@ -1,75 +1,74 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Premium Design System - Modern Glassmorphism with Purple-Blue Theme */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Base colors - Modern neutral palette */
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 240 5% 6%;
+    --popover-foreground: 0 0% 98%;
 
-    /* Purple-blue themed primary colors */
-    --primary: 260 85% 55%;
+    /* Premium Purple-Blue Primary Palette */
+    --primary: 262 83% 58%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 260 85% 75%;
+    --primary-glow: 262 83% 70%;
+    --primary-dark: 262 83% 45%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 240 10% 10%;
+    --secondary-foreground: 0 0% 95%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 240 5% 15%;
+    --muted-foreground: 240 5% 65%;
 
-    --accent: 240 100% 60%;
+    --accent: 270 95% 65%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 260 85% 55%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 262 83% 58%;
 
     --radius: 0.75rem;
 
-    /* Purple-blue specific colors */
-    --ai-primary: 260 85% 55%;
-    --ai-secondary: 240 100% 60%;
-    --ai-success: 120 100% 40%;
-    --ai-warning: 45 100% 50%;
-    --ai-error: 0 100% 50%;
+    /* Glassmorphism Effects */
+    --glass-bg: 240 10% 8% / 0.8;
+    --glass-border: 240 10% 18% / 0.3;
+    --glass-hover: 240 10% 12% / 0.9;
 
-    /* Purple-blue gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(260 85% 55%), hsl(240 100% 60%));
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(210 40% 98%));
+    /* Premium Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(270 95% 65%) 50%, hsl(280 90% 70%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(240 10% 8%) 0%, hsl(240 5% 12%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(240 10% 8% / 0.6) 0%, hsl(240 5% 12% / 0.8) 100%);
+    --gradient-mesh: radial-gradient(circle at 20% 50%, hsl(262 83% 58% / 0.3) 0%, transparent 50%), 
+                     radial-gradient(circle at 80% 20%, hsl(270 95% 65% / 0.2) 0%, transparent 50%),
+                     radial-gradient(circle at 40% 80%, hsl(280 90% 70% / 0.2) 0%, transparent 50%);
     
-    /* Purple-blue shadows */
-    --shadow-glow: 0 0 30px hsl(260 85% 55% / 0.3);
-    --shadow-card: 0 4px 20px hsl(222.2 84% 4.9% / 0.1);
+    /* Advanced Shadows */
+    --shadow-glow: 0 0 40px hsl(262 83% 58% / 0.4), 0 0 80px hsl(270 95% 65% / 0.2);
+    --shadow-card: 0 8px 32px hsl(240 10% 3% / 0.4), 0 2px 8px hsl(240 10% 3% / 0.6);
+    --shadow-float: 0 20px 40px hsl(240 10% 3% / 0.3), 0 8px 16px hsl(240 10% 3% / 0.4);
+    --shadow-inner: inset 0 1px 0 hsl(0 0% 100% / 0.1);
 
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Sidebar colors */
+    --sidebar-background: 240 10% 3.9%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 262 83% 58%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 5% 15%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 262 83% 58%;
   }
 
   .dark {
@@ -134,11 +133,46 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
-    font-family: "Tw Cen MT", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    font-family: "Inter", "Tw Cen MT", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    background: hsl(var(--background));
+    background-image: var(--gradient-mesh);
+    background-attachment: fixed;
+  }
+
+  /* Scrollbar Styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary));
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary-dark));
   }
 }
 
 @layer components {
+  /* Premium Glassmorphism Components */
+  .glass-card {
+    background: hsl(var(--glass-bg));
+    backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid hsl(var(--glass-border));
+    box-shadow: var(--shadow-card), var(--shadow-inner);
+  }
+
+  .glass-card:hover {
+    background: hsl(var(--glass-hover));
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-float), var(--shadow-inner);
+  }
+
   .ai-gradient {
     background: var(--gradient-primary);
   }
@@ -150,10 +184,75 @@ All colors MUST be HSL.
   .card-shadow {
     box-shadow: var(--shadow-card);
   }
-  
-  .animate-pulse-glow {
-    animation: pulse-glow 2s ease-in-out infinite alternate;
+
+  .floating-card {
+    animation: float 6s ease-in-out infinite;
   }
+
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shimmer::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(45deg, transparent 30%, hsl(var(--primary) / 0.1) 50%, transparent 70%);
+    transform: translateX(-100%);
+    animation: shimmer 2s infinite;
+  }
+
+  .action-button {
+    @apply glass-card transition-all duration-300 hover:scale-105 cursor-pointer;
+    animation: slideInUp 0.6s ease-out;
+  }
+
+  .action-button:nth-child(1) { animation-delay: 0.1s; }
+  .action-button:nth-child(2) { animation-delay: 0.2s; }
+  .action-button:nth-child(3) { animation-delay: 0.3s; }
+
+  .chat-input {
+    @apply glass-card;
+    background: hsl(var(--background) / 0.9);
+    backdrop-filter: blur(20px) saturate(180%);
+  }
+
+  .logo-glow {
+    filter: drop-shadow(0 0 20px hsl(var(--primary) / 0.5));
+    animation: logoFloat 4s ease-in-out infinite;
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes logoFloat {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-5px) rotate(1deg); }
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 @keyframes pulse-glow {

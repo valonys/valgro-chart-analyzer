@@ -1,8 +1,23 @@
 import { useState, useCallback } from 'react';
-import { AppState, ChatMessage, Analysis, UploadedImage, AIModel, Document } from '@/types/chart-analysis';
+import { AppState, ChatMessage, Analysis, UploadedImage, AIModel, AIModelType, Document } from '@/types/chart-analysis';
 import { aiService } from '@/lib/ai-service';
 import { vectorStore } from '@/lib/vector-store';
 import { useToast } from '@/hooks/use-toast';
+
+const models: AIModel[] = [
+  {
+    id: 'scout',
+    name: 'Scout',
+    description: 'Detailed analysis with comprehensive insights',
+    tier: 'standard'
+  },
+  {
+    id: 'maverick',
+    name: 'Maverick',
+    description: 'Enhanced context with advanced reasoning',
+    tier: 'premium'
+  }
+];
 
 export const useChartAnalysis = () => {
   const { toast } = useToast();
@@ -20,7 +35,7 @@ export const useChartAnalysis = () => {
   }, []);
 
   const setSelectedModel = useCallback((model: AIModel) => {
-    setState(prev => ({ ...prev, selectedModel: model }));
+    setState(prev => ({ ...prev, selectedModel: model.id }));
   }, []);
 
   const uploadImage = useCallback((file: File) => {
@@ -228,6 +243,7 @@ export const useChartAnalysis = () => {
 
   return {
     ...state,
+    selectedModel: models.find(m => m.id === state.selectedModel) || models[0],
     setCurrentTab,
     setSelectedModel,
     uploadImage,

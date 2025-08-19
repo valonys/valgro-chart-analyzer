@@ -11,7 +11,7 @@ export interface Analysis {
   imageUrl: string;
   results: AnalysisResult[];
   timestamp: Date;
-  model: AIModel;
+  model: AIModelType;
 }
 
 export interface AnalysisResult {
@@ -32,11 +32,18 @@ export interface Document {
   vector?: number[];
 }
 
-export type AIModel = 'scout' | 'maverick';
+export type AIModelType = 'scout' | 'maverick';
+
+export interface AIModel {
+  id: AIModelType;
+  name: string;
+  description: string;
+  tier: 'standard' | 'premium';
+}
 
 export interface AIResponse {
   content: string;
-  model: AIModel;
+  model: AIModelType;
   timestamp: Date;
   confidence?: number;
 }
@@ -49,7 +56,7 @@ export interface UploadedImage {
 
 export interface AppState {
   currentTab: 'upload' | 'chat' | 'analysis' | 'history';
-  selectedModel: AIModel;
+  selectedModel: AIModelType;
   uploadedImage?: UploadedImage;
   chatHistory: ChatMessage[];
   analysisHistory: Analysis[];
