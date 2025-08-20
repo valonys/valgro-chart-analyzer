@@ -374,16 +374,40 @@ export class AIService {
         prompt = `Context: ${context}\n\nUser: ${message}`;
       }
 
-      const messages = [
+      const messages: any[] = [
         {
-          role: 'system' as const,
+          role: 'system',
           content: BASE_SYSTEM_PROMPT
-        },
-        {
-          role: 'user' as const,
-          content: prompt
         }
       ];
+
+      // Handle image in message
+      if (imageUrl && imageUrl.startsWith('data:')) {
+        const base64Image = imageUrl.split(',')[1];
+        messages.push({
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: buildChartPrompt({
+                userGoal: prompt,
+                domain
+              })
+            },
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:image/jpeg;base64,${base64Image}`
+              }
+            }
+          ]
+        });
+      } else {
+        messages.push({
+          role: 'user',
+          content: prompt
+        });
+      }
       
       console.log('Starting streaming chat response...', { model, messageCount: messages.length });
       
