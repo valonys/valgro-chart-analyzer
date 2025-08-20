@@ -31,6 +31,8 @@ export const ChatInterface = ({
   const [message, setMessage] = useState('');
   const [useRAG, setUseRAG] = useState(true);
   const [streamingMessage, setStreamingMessage] = useState('');
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [uploadedImagePreview, setUploadedImagePreview] = useState<string | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -49,10 +51,31 @@ export const ChatInterface = ({
   const handleSend = () => {
     if (message.trim()) {
       setStreamingMessage('');
+      setUploadedImagePreview(null); // Clear image preview after sending
       onStreamMessage(message, useRAG, (token: string) => {
         setStreamingMessage(prev => prev + token);
       });
       setMessage('');
+    }
+  };
+
+  const handleImageUpload = async (file: File) => {
+    setIsUploadingImage(true);
+    try {
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setUploadedImagePreview(previewUrl);
+      
+      // Upload the image
+      await onImageUpload(file);
+      
+      // Set a message about the uploaded image
+      setMessage(`I've uploaded an image. Can you analyze this chart for me?`);
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      setUploadedImagePreview(null);
+    } finally {
+      setIsUploadingImage(false);
     }
   };
 
@@ -170,8 +193,22 @@ export const ChatInterface = ({
                   <div className="bg-muted rounded-lg px-4 py-3">
                     <div className="flex items-center space-x-2">
                       <div className="animate-spin rounded-full h-4 w-4 border-2 border-foreground border-t-transparent"></div>
-                      <span className="text-sm text-foreground">Thinking...</span>
+                      <span className="text-sm text-foreground">Analyzing...</span>
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {isUploadingImage && (
+                <div className="flex items-start space-x-3 justify-end">
+                  <div className="bg-primary/10 rounded-lg px-4 py-3 max-w-[75%]">
+                    <div className="flex items-center space-x-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
+                      <span className="text-sm text-primary">Uploading image...</span>
+                    </div>
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                    <User className="h-4 w-4 text-primary-foreground" />
                   </div>
                 </div>
               )}
@@ -181,7 +218,29 @@ export const ChatInterface = ({
         
         {/* Input Area */}
         <div className="border-t border-border p-6">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-4xl mx-auto space-y-4">
+            {/* Image Preview */}
+            {uploadedImagePreview && (
+              <div className="flex justify-end">
+                <div className="relative max-w-xs">
+                  <img
+                    src={uploadedImagePreview}
+                    alt="Upload preview"
+                    className="rounded-lg border max-h-32 object-cover"
+                  />
+                  <button
+                    onClick={() => {
+                      setUploadedImagePreview(null);
+                      setMessage('');
+                    }}
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center text-xs hover:bg-destructive/80"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            )}
+            
             <div className="relative flex items-center bg-input rounded-lg border border-border">
               <div className="flex items-center pl-4 space-x-3">
                 <input
@@ -192,15 +251,23 @@ export const ChatInterface = ({
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file && file.type.startsWith('image/')) {
-                      onImageUpload(file);
+                      handleImageUpload(file);
                     }
                   }}
                 />
                 <label
                   htmlFor="file-upload"
-                  className="cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
+                  className={`cursor-pointer transition-colors ${
+                    isUploadingImage 
+                      ? 'text-muted-foreground/50 cursor-not-allowed' 
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
                 >
-                  <Paperclip className="w-5 h-5" />
+                  {isUploadingImage ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-muted-foreground border-t-transparent"></div>
+                  ) : (
+                    <Paperclip className="w-5 h-5" />
+                  )}
                 </label>
                 <Mic className="w-5 h-5 text-muted-foreground hover:text-foreground cursor-pointer transition-colors" />
               </div>
@@ -210,14 +277,14 @@ export const ChatInterface = ({
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Ask anything..."
-                disabled={isProcessing}
+                disabled={isProcessing || isUploadingImage}
                 className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 px-4 py-4 text-base placeholder:text-muted-foreground"
               />
               
               <div className="flex items-center pr-2">
                 <Button
                   onClick={handleSend}
-                  disabled={!message.trim() || isProcessing}
+                  disabled={!message.trim() || isProcessing || isUploadingImage}
                   size="icon"
                   className="minimal-button rounded-full w-10 h-10"
                 >
