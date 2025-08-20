@@ -366,17 +366,70 @@ export class AIService {
           content: prompt
         }
       ];
-    
-      // For streaming, we'll get the full response and then stream it word by word
-      // Real streaming would require SSE endpoint, but this simulates it
-      const fullResponse = await this.callGroqAPI(messages, model);
-      const words = fullResponse.split(' ');
-    
-      // Stream words with realistic delays
-      for (let i = 0; i < words.length; i++) {
-        const word = words[i];
-        await new Promise(resolve => setTimeout(resolve, 50 + Math.random() * 100));
-        yield word + (i < words.length - 1 ? ' ' : '');
+      
+      console.log('Starting streaming chat response...', { model, messageCount: messages.length });
+      
+      const { data, error } = await supabase.functions.invoke('groq-chat', {
+        body: {
+          messages,
+          model,
+          stream: true
+        }
+      });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error(`Streaming chat failed: ${error.message}`);
+      }
+
+      // The response should be a ReadableStream for streaming responses
+      if (!data || !data.getReader) {
+        console.error('No stream available in response');
+        throw new Error('No stream reader available');
+      }
+
+      const reader = data.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          
+          if (done) {
+            console.log('Stream completed');
+            break;
+          }
+          
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+          
+          for (const line of lines) {
+            if (line.trim() === '') continue;
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') {
+                console.log('Stream finished with [DONE]');
+                return;
+              }
+              
+              try {
+                const parsed = JSON.parse(data);
+                const content = parsed.choices?.[0]?.delta?.content;
+                if (content) {
+                  yield content;
+                }
+              } catch (e) {
+                // Skip malformed JSON
+                console.warn('Skipping malformed JSON:', data);
+                continue;
+              }
+            }
+          }
+        }
+      } finally {
+        reader.releaseLock();
       }
     } catch (error) {
       console.error('Streaming chat failed:', error);
