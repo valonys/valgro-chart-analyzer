@@ -62,12 +62,15 @@ export const ChatInterface = ({
   const handleImageUpload = async (file: File) => {
     setIsUploadingImage(true);
     try {
-      // Create preview URL
+      // Create preview URL immediately
       const previewUrl = URL.createObjectURL(file);
       setUploadedImagePreview(previewUrl);
       
+      // Add a realistic delay to show loading state
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
       // Upload the image
-      await onImageUpload(file);
+      onImageUpload(file);
       
       // Set a message about the uploaded image
       setMessage(`I've uploaded an image. Can you analyze this chart for me?`);
