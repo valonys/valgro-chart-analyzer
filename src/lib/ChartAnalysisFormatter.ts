@@ -154,19 +154,19 @@ function fmtMaybeNumberOrText(
 }
 
 function bullet(lines: string[]): string {
-  return lines.map((l) => `- ${clean(l)}`).join("\n");
+  return lines.map((l) => `• ${clean(l)}`).join("\n");
 }
 function section(title: string, lines: string[], opts: FormatOptions): string {
   const body = bullet(lines);
-  return lines.length ? `**${title}**\n\n${body}\n` : opts.includeEmptySections ? `**${title}**\n\n- Not available\n` : "";
+  return lines.length ? `${title}\n\n${body}\n` : opts.includeEmptySections ? `${title}\n\n• Not available\n` : "";
 }
 
 function renderSnapshot(a: ChartAnalysis, opts: Required<FormatOptions>): string[] {
   const lines: string[] = [];
-  if (!isBlank(a.chart_type)) lines.push(`**Type:** ${a.chart_type}`);
+  if (!isBlank(a.chart_type)) lines.push(`Type: ${a.chart_type}`);
   if (a.metric && !isBlank(a.metric.name)) {
     const unit = a.metric.unit ? ` (${a.metric.unit})` : "";
-    lines.push(`**Metric:** ${a.metric.name}${unit}`);
+    lines.push(`Metric: ${a.metric.name}${unit}`);
   }
   if (a.timeframe && (a.timeframe.start || a.timeframe.end || a.timeframe.frequency)) {
     const tf = [
@@ -176,7 +176,7 @@ function renderSnapshot(a: ChartAnalysis, opts: Required<FormatOptions>): string
     ]
       .filter(Boolean)
       .join(" • ");
-    if (tf) lines.push(`**Timeframe:** ${tf}`);
+    if (tf) lines.push(`Timeframe: ${tf}`);
   }
   if (a.key_values && a.key_values.length) {
     const kv = limit(uniq(a.key_values), opts.maxBulletsPerSection).map((k) => {
@@ -187,7 +187,7 @@ function renderSnapshot(a: ChartAnalysis, opts: Required<FormatOptions>): string
         k.unit
       );
       const where = k.where_in_chart ? ` (${k.where_in_chart})` : "";
-      return `**${k.label}:** ${val}${where}`;
+      return `${k.label}: ${val}${where}`;
     });
     lines.push(...kv);
   }
@@ -204,7 +204,7 @@ function renderComparisons(a: ChartAnalysis, opts: Required<FormatOptions>): str
     if (typeof c.delta_abs === "number") deltas.push(fmtNumber(c.delta_abs, opts.locale));
     if (typeof c.delta_pct === "number") deltas.push(`${fmtPct(c.delta_pct, opts.locale)}`);
     const deltaStr = deltas.length ? ` (${deltas.join(" / ")})` : "";
-    return `**${c.type}:** ${c.from} → ${c.to}${deltaStr}`;
+    return `${c.type}: ${c.from} → ${c.to}${deltaStr}`;
   });
   return lines;
 }
@@ -237,7 +237,7 @@ export function formatAnalysisMarkdown(
   // Prose summary (one short paragraph, no bullets)
   const sum = summarize(a.prose_summary);
   if (sum.length) {
-    parts.push(`**${opts.headings.summary}**\n\n${sum[0]}\n`);
+    parts.push(`${opts.headings.summary}\n\n${sum[0]}\n`);
   }
 
   // Snapshot
@@ -264,7 +264,7 @@ export function formatAnalysisMarkdown(
   // JSON block (optional: keep last)
   const json = { ...a };
   if (Object.keys(json).length) {
-    parts.push(`**${opts.headings.json}**\n\n\`\`\`json\n${JSON.stringify(json, null, 2)}\n\`\`\`\n`);
+    parts.push(`${opts.headings.json}\n\n\`\`\`json\n${JSON.stringify(json, null, 2)}\n\`\`\`\n`);
   }
 
   // Join with single blank lines; strip accidental doubles

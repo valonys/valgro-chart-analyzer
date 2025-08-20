@@ -72,8 +72,7 @@ export const ChatInterface = ({
       // Upload the image
       onImageUpload(file);
       
-      // Set a message about the uploaded image
-      setMessage(`I've uploaded an image. Can you analyze this chart for me?`);
+      // Image uploaded successfully - user can choose what to ask
     } catch (error) {
       console.error('Error uploading image:', error);
       setUploadedImagePreview(null);
