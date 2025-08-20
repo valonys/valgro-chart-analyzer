@@ -18,7 +18,7 @@ const MODEL_CONFIG = {
     displayName: 'Llama 4 Scout (Vision)'
   },
   maverick: {
-    name: 'meta-llama/llama-4-maverick-72b-16e-instruct', 
+    name: 'meta-llama/llama-4-maverick-17b-128e-instruct', 
     displayName: 'Llama 4 Maverick (Vision)'
   }
 } as const;
