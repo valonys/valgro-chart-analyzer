@@ -39,6 +39,13 @@ export const ChatInterface = ({
     }
   }, [chatHistory]);
 
+  // Clear streaming message when new message is added to history
+  useEffect(() => {
+    if (chatHistory.length > 0) {
+      setStreamingMessage('');
+    }
+  }, [chatHistory.length]);
+
   const handleSend = () => {
     if (message.trim()) {
       setStreamingMessage('');
