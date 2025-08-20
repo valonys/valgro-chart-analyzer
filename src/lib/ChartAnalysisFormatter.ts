@@ -261,11 +261,7 @@ export function formatAnalysisMarkdown(
   parts.push(section(opts.headings.assumptions, renderPlainList(a.assumptions, opts), opts));
   parts.push(section(opts.headings.questions, renderPlainList(a.follow_up_questions, opts), opts));
 
-  // JSON block (optional: keep last)
-  const json = { ...a };
-  if (Object.keys(json).length) {
-    parts.push(`${opts.headings.json}\n\n\`\`\`json\n${JSON.stringify(json, null, 2)}\n\`\`\`\n`);
-  }
+  // JSON block removed - showing only formatted prose analysis
 
   // Join with single blank lines; strip accidental doubles
   return parts.filter(Boolean).join("\n").replace(/\n{3,}/g, "\n\n");
