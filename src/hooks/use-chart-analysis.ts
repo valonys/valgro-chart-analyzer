@@ -8,13 +8,13 @@ const models: AIModel[] = [
   {
     id: 'scout',
     name: 'Scout',
-    description: 'Llama 3.2 11B Vision - Fast and efficient chart analysis',
+    description: 'Llama 4 Scout 17B Vision - Fast and efficient chart analysis',
     tier: 'standard'
   },
   {
     id: 'maverick',
     name: 'Maverick',
-    description: 'Llama 3.2 90B Vision - Advanced reasoning and detailed insights',
+    description: 'Llama 4 Maverick 17B Vision - Advanced reasoning and detailed insights',
     tier: 'premium'
   }
 ];
@@ -25,6 +25,7 @@ export const useChartAnalysis = () => {
   const [state, setState] = useState<AppState>({
     currentTab: 'upload',
     selectedModel: 'scout',
+    selectedDomain: 'business',
     chatHistory: [],
     analysisHistory: [],
     isProcessing: false
@@ -38,12 +39,16 @@ export const useChartAnalysis = () => {
     setState(prev => ({ ...prev, selectedModel: model.id }));
   }, []);
 
+  const setSelectedDomain = useCallback((domain: 'business' | 'industrial' | 'medical') => {
+    setState(prev => ({ ...prev, selectedDomain: domain }));
+  }, []);
+
   const uploadImage = useCallback(async (file: File) => {
     setState(prev => ({ ...prev, isProcessing: true }));
     
     try {
-      // Upload and analyze the image
-      const result = await aiService.uploadAndAnalyzeImage(file, state.selectedModel);
+      // Upload and analyze the image with domain-specific analysis
+      const result = await aiService.uploadAndAnalyzeImage(file, state.selectedModel, state.selectedDomain);
       
       // Create analysis entry
       const analysis: Analysis = {
@@ -51,7 +56,8 @@ export const useChartAnalysis = () => {
         imageUrl: result.imageUrl,
         results: result.analysis,
         timestamp: new Date(),
-        model: state.selectedModel
+        model: state.selectedModel,
+        domain: state.selectedDomain
       };
 
       // Add to vector store
@@ -62,7 +68,8 @@ export const useChartAnalysis = () => {
         metadata: {
           timestamp: new Date(),
           analysis_id: analysis.id,
-          type: 'analysis'
+          type: 'analysis',
+          domain: state.selectedDomain
         }
       };
       vectorStore.addDocument(document);
@@ -71,7 +78,7 @@ export const useChartAnalysis = () => {
       const userMessage: ChatMessage = {
         id: Date.now().toString(),
         role: 'user',
-        content: 'I\'ve uploaded an image. Can you analyze this chart for me?',
+        content: `I've uploaded an image for ${state.selectedDomain} analysis. Can you analyze this chart for me?`,
         timestamp: new Date(),
         imageUrl: result.imageUrl
       };
@@ -79,7 +86,7 @@ export const useChartAnalysis = () => {
       const aiMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `I've analyzed your chart image. Here are the key insights I found:\n\n${result.analysis.map(r => `**${r.question}**\n${r.answer}\n`).join('\n')}`,
+        content: `I've analyzed your chart image using ${state.selectedDomain} domain expertise. Here are the key insights I found:\n\n${result.analysis.map(r => `**${r.question}**\n${r.answer}\n`).join('\n')}`,
         timestamp: new Date()
       };
 
@@ -93,7 +100,7 @@ export const useChartAnalysis = () => {
 
       toast({
         title: "Upload and analysis complete",
-        description: `Chart analyzed using ${state.selectedModel === 'scout' ? 'Scout' : 'Maverick'} model`
+        description: `Chart analyzed using ${state.selectedModel === 'scout' ? 'Scout' : 'Maverick'} model with ${state.selectedDomain} expertise`
       });
     } catch (error) {
       setState(prev => ({ ...prev, isProcessing: false }));
@@ -103,7 +110,7 @@ export const useChartAnalysis = () => {
         variant: "destructive"
       });
     }
-  }, [state.selectedModel, toast]);
+  }, [state.selectedModel, state.selectedDomain, toast]);
 
   const analyzeChart = useCallback(async () => {
     if (!state.uploadedImage) return;
@@ -111,14 +118,15 @@ export const useChartAnalysis = () => {
     setState(prev => ({ ...prev, isProcessing: true }));
     
     try {
-      const results = await aiService.analyzeChart(state.uploadedImage.url, state.selectedModel);
+      const results = await aiService.analyzeChart(state.uploadedImage.url, state.selectedModel, state.selectedDomain);
       
       const analysis: Analysis = {
         id: Date.now().toString(),
         imageUrl: state.uploadedImage.url,
         results,
         timestamp: new Date(),
-        model: state.selectedModel
+        model: state.selectedModel,
+        domain: state.selectedDomain
       };
 
       // Add to vector store
@@ -129,7 +137,8 @@ export const useChartAnalysis = () => {
         metadata: {
           timestamp: new Date(),
           analysis_id: analysis.id,
-          type: 'analysis'
+          type: 'analysis',
+          domain: state.selectedDomain
         }
       };
       vectorStore.addDocument(document);
@@ -143,7 +152,7 @@ export const useChartAnalysis = () => {
 
       toast({
         title: "Analysis complete",
-        description: `Chart analyzed using ${state.selectedModel === 'scout' ? 'Scout' : 'Maverick'} model`
+        description: `Chart analyzed using ${state.selectedModel === 'scout' ? 'Scout' : 'Maverick'} model with ${state.selectedDomain} expertise`
       });
     } catch (error) {
       setState(prev => ({ ...prev, isProcessing: false }));
@@ -153,7 +162,7 @@ export const useChartAnalysis = () => {
         variant: "destructive"
       });
     }
-  }, [state.uploadedImage, state.selectedModel, toast]);
+  }, [state.uploadedImage, state.selectedModel, state.selectedDomain, toast]);
 
   const sendChatMessage = useCallback(async (message: string, useRAG: boolean = false) => {
     if (!message.trim()) return;
@@ -197,7 +206,8 @@ export const useChartAnalysis = () => {
         metadata: {
           timestamp: new Date(),
           chat_id: assistantMessage.id,
-          type: 'chat'
+          type: 'chat',
+          domain: state.selectedDomain
         }
       };
       vectorStore.addDocument(document);
@@ -264,7 +274,8 @@ export const useChartAnalysis = () => {
         metadata: {
           timestamp: new Date(),
           chat_id: assistantMessage.id,
-          type: 'chat'
+          type: 'chat',
+          domain: state.selectedDomain
         }
       };
       vectorStore.addDocument(document);
@@ -298,6 +309,7 @@ export const useChartAnalysis = () => {
     selectedModel: models.find(m => m.id === state.selectedModel) || models[0],
     setCurrentTab,
     setSelectedModel,
+    setSelectedDomain,
     uploadImage,
     analyzeChart,
     sendChatMessage,

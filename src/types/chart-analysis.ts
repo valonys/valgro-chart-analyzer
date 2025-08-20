@@ -12,6 +12,7 @@ export interface Analysis {
   results: AnalysisResult[];
   timestamp: Date;
   model: AIModelType;
+  domain?: 'business' | 'industrial' | 'medical';
 }
 
 export interface AnalysisResult {
@@ -28,6 +29,7 @@ export interface Document {
     analysis_id?: string;
     chat_id?: string;
     type: 'analysis' | 'chat';
+    domain?: 'business' | 'industrial' | 'medical';
   };
   vector?: number[];
 }
@@ -57,6 +59,7 @@ export interface UploadedImage {
 export interface AppState {
   currentTab: 'upload' | 'chat' | 'analysis' | 'history';
   selectedModel: AIModelType;
+  selectedDomain: 'business' | 'industrial' | 'medical';
   uploadedImage?: UploadedImage;
   chatHistory: ChatMessage[];
   analysisHistory: Analysis[];
