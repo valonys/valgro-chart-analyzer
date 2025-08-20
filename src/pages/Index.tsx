@@ -5,6 +5,8 @@ import { Sparkles, Zap } from 'lucide-react';
 import { useChartAnalysis } from '@/hooks/use-chart-analysis';
 import { ChatInterface } from '@/components/ChatInterface';
 import { AppSidebar } from '@/components/AppSidebar';
+import { ApiKeyInput } from '@/components/ApiKeyInput';
+import { aiService } from '@/lib/ai-service';
 
 const Index = () => {
   const {
@@ -20,11 +22,28 @@ const Index = () => {
   } = useChartAnalysis();
 
   const [showWelcome, setShowWelcome] = useState(true);
+  const [hasApiKey, setHasApiKey] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowWelcome(false), 2000);
-    return () => clearTimeout(timer);
+    // Check if API key is already stored
+    const storedKey = localStorage.getItem('groq_api_key');
+    if (storedKey) {
+      aiService.setApiKey(storedKey);
+      setHasApiKey(true);
+    }
   }, []);
+
+  useEffect(() => {
+    if (hasApiKey) {
+      const timer = setTimeout(() => setShowWelcome(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [hasApiKey]);
+
+  // Show API key input if no key is configured
+  if (!hasApiKey) {
+    return <ApiKeyInput onApiKeySet={() => setHasApiKey(true)} />;
+  }
 
   if (showWelcome) {
     return (

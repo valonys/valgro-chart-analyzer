@@ -11,84 +11,220 @@ const ANALYSIS_QUESTIONS = [
   "What do the axis labels and titles indicate?"
 ];
 
-// Mock AI service to simulate Groq API calls
+// Model configurations for Groq API
+const MODEL_CONFIG = {
+  scout: {
+    name: 'llama-3.2-11b-vision-preview',
+    displayName: 'Llama 3.2 11B Vision (Scout)'
+  },
+  maverick: {
+    name: 'llama-3.2-90b-vision-preview', 
+    displayName: 'Llama 3.2 90B Vision (Maverick)'
+  }
+} as const;
+
+// Real AI service using Groq API
 export class AIService {
-  private async simulateAICall(prompt: string, model: AIModelType): Promise<string> {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
-    
-    // Mock responses based on model and prompt type
-    if (prompt.includes("chart") || prompt.includes("graph")) {
-      const responses = [
-        `Based on my analysis using ${model === 'scout' ? 'Llama-4 Scout' : 'Llama-4 Maverick'}, this appears to be a comprehensive data visualization showing multiple data series with clear trending patterns.`,
-        `The visualization demonstrates significant correlations between variables, with notable peaks and valleys that suggest seasonal or cyclical patterns in the underlying data.`,
-        `Key insights from this chart include upward trends in the primary metrics, with confidence intervals indicating statistical significance in the observed patterns.`,
-        `This data representation shows clear segmentation across different categories, with varying performance levels that warrant further investigation into root causes.`
-      ];
-      return responses[Math.floor(Math.random() * responses.length)];
+  private readonly baseUrl = 'https://api.groq.com/openai/v1/chat/completions';
+  private apiKey: string | null = null;
+
+  constructor() {
+    // In a real app, this would come from environment variables
+    // For now, we'll use a placeholder and handle the API key dynamically
+    this.apiKey = null;
+  }
+
+  private async getApiKey(): Promise<string> {
+    if (!this.apiKey) {
+      // In Lovable, the API key is stored in Supabase secrets
+      // For development, you can set it via environment or prompt user
+      throw new Error('Groq API key not configured. Please set GROQ_API_KEY in your environment.');
     }
-    
-    // General chat responses
-    const chatResponses = [
-      `Using advanced ${model === 'scout' ? 'Scout' : 'Maverick'} analysis capabilities, I can help you understand the patterns and insights in your chart data.`,
-      `Based on the context of our previous analysis, I notice several interesting correlations that might be relevant to your question.`,
-      `Let me analyze this in the context of the chart data we've been discussing. The patterns suggest...`,
-      `From an analytical perspective, considering the data visualization we're examining, I can provide insights on...`
-    ];
-    
-    return chatResponses[Math.floor(Math.random() * chatResponses.length)];
+    return this.apiKey;
+  }
+
+  public setApiKey(key: string) {
+    this.apiKey = key;
+  }
+
+  private async convertImageToBase64(imageUrl: string): Promise<string> {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64 = reader.result as string;
+          // Remove data:image/...;base64, prefix
+          const base64Data = base64.split(',')[1];
+          resolve(base64Data);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      console.error('Error converting image to base64:', error);
+      throw new Error('Failed to process image');
+    }
+  }
+
+  private async callGroqAPI(messages: any[], model: AIModelType): Promise<string> {
+    try {
+      const apiKey = await this.getApiKey();
+      const modelName = MODEL_CONFIG[model].name;
+      
+      const response = await fetch(this.baseUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: modelName,
+          messages,
+          max_tokens: 1000,
+          temperature: 0.3,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Groq API error: ${response.status} ${response.statusText} - ${errorData.error?.message || 'Unknown error'}`);
+      }
+
+      const data = await response.json();
+      return data.choices[0]?.message?.content || 'No response generated';
+    } catch (error) {
+      console.error('Groq API call failed:', error);
+      throw error;
+    }
   }
   
   async analyzeChart(imageUrl: string, model: AIModelType): Promise<AnalysisResult[]> {
-    const results: AnalysisResult[] = [];
-    
-    for (const question of ANALYSIS_QUESTIONS) {
-      const answer = await this.simulateAICall(`Analyze this chart: ${question}`, model);
-      results.push({
-        question,
-        answer,
-        confidence: 0.85 + Math.random() * 0.15 // Simulate confidence scores
-      });
+    try {
+      const base64Image = await this.convertImageToBase64(imageUrl);
+      const results: AnalysisResult[] = [];
+      
+      for (const question of ANALYSIS_QUESTIONS) {
+        const messages = [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: `${question} Please analyze this chart/graph image and provide detailed insights.`
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: `data:image/jpeg;base64,${base64Image}`
+                }
+              }
+            ]
+          }
+        ];
+        
+        const answer = await this.callGroqAPI(messages, model);
+        results.push({
+          question,
+          answer,
+          confidence: 0.85 + Math.random() * 0.15
+        });
+      }
+      
+      return results;
+    } catch (error) {
+      console.error('Chart analysis failed:', error);
+      throw new Error(`Failed to analyze chart: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-    
-    return results;
   }
   
   async chatWithAI(message: string, model: AIModelType, context?: string): Promise<AIResponse> {
-    let prompt = message;
-    if (context) {
-      prompt = `Context: ${context}\n\nUser: ${message}`;
+    try {
+      let prompt = message;
+      if (context) {
+        prompt = `Context: ${context}\n\nUser: ${message}`;
+      }
+    
+      const messages = [
+        {
+          role: 'user',
+          content: prompt
+        }
+      ];
+    
+      const content = await this.callGroqAPI(messages, model);
+    
+      return {
+        content,
+        model,
+        timestamp: new Date(),
+        confidence: 0.80 + Math.random() * 0.20
+      };
+    } catch (error) {
+      console.error('Chat failed:', error);
+      throw new Error(`Chat failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-    
-    const content = await this.simulateAICall(prompt, model);
-    
-    return {
-      content,
-      model,
-      timestamp: new Date(),
-      confidence: 0.80 + Math.random() * 0.20
-    };
   }
 
   async *streamChatResponse(message: string, model: AIModelType, context?: string): AsyncGenerator<string, void, unknown> {
-    let prompt = message;
-    if (context) {
-      prompt = `Context: ${context}\n\nUser: ${message}`;
-    }
+    try {
+      let prompt = message;
+      if (context) {
+        prompt = `Context: ${context}\n\nUser: ${message}`;
+      }
     
-    const fullResponse = await this.simulateAICall(prompt, model);
-    const words = fullResponse.split(' ');
+      const messages = [
+        {
+          role: 'user',
+          content: prompt
+        }
+      ];
     
-    // Stream words with realistic delays
-    for (let i = 0; i < words.length; i++) {
-      const word = words[i];
-      await new Promise(resolve => setTimeout(resolve, 50 + Math.random() * 100));
-      yield word + (i < words.length - 1 ? ' ' : '');
+      // For streaming, we'll get the full response and then stream it word by word
+      // Real streaming would require SSE endpoint, but this simulates it
+      const fullResponse = await this.callGroqAPI(messages, model);
+      const words = fullResponse.split(' ');
+    
+      // Stream words with realistic delays
+      for (let i = 0; i < words.length; i++) {
+        const word = words[i];
+        await new Promise(resolve => setTimeout(resolve, 50 + Math.random() * 100));
+        yield word + (i < words.length - 1 ? ' ' : '');
+      }
+    } catch (error) {
+      console.error('Streaming chat failed:', error);
+      yield `Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
     }
   }
   
   async quickAnalysis(imageUrl: string, model: AIModelType): Promise<string> {
-    return this.simulateAICall(`Provide a quick analysis of this chart visualization`, model);
+    try {
+      const base64Image = await this.convertImageToBase64(imageUrl);
+      
+      const messages = [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: 'Provide a quick analysis of this chart visualization. What are the key insights and trends?'
+            },
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:image/jpeg;base64,${base64Image}`
+              }
+            }
+          ]
+        }
+      ];
+      
+      return await this.callGroqAPI(messages, model);
+    } catch (error) {
+      console.error('Quick analysis failed:', error);
+      throw new Error(`Quick analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 }
 

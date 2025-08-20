@@ -8,13 +8,13 @@ const models: AIModel[] = [
   {
     id: 'scout',
     name: 'Scout',
-    description: 'Detailed analysis with comprehensive insights',
+    description: 'Llama 3.2 11B Vision - Fast and efficient chart analysis',
     tier: 'standard'
   },
   {
     id: 'maverick',
     name: 'Maverick',
-    description: 'Enhanced context with advanced reasoning',
+    description: 'Llama 3.2 90B Vision - Advanced reasoning and detailed insights',
     tier: 'premium'
   }
 ];
