@@ -1,5 +1,6 @@
 import { AIModelType, AIResponse, AnalysisResult } from '@/types/chart-analysis';
 import { supabase } from '@/integrations/supabase/client';
+import { formatAnalysisMarkdown, ChartAnalysis } from './ChartAnalysisFormatter';
 
 // Enhanced analysis questions for comprehensive chart analysis
 const ANALYSIS_QUESTIONS = [
@@ -265,10 +266,25 @@ export class AIService {
       // Parse the response and create individual results for each question
       const results: AnalysisResult[] = [];
       
+      // Parse the comprehensive analysis and format it
+      let formattedAnalysis = fullAnalysis;
+      try {
+        // Try to extract JSON from the response and format it
+        const jsonMatch = fullAnalysis.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const analysisData = JSON.parse(jsonMatch[0]) as ChartAnalysis;
+          analysisData.prose_summary = fullAnalysis.split(jsonMatch[0])[0].trim();
+          formattedAnalysis = formatAnalysisMarkdown(analysisData);
+        }
+      } catch (e) {
+        // If JSON parsing fails, use the raw response
+        console.warn('Could not parse JSON from analysis response, using raw format');
+      }
+
       // Create a comprehensive analysis result
       results.push({
         question: "Comprehensive Chart Analysis",
-        answer: fullAnalysis,
+        answer: formattedAnalysis,
         confidence: 0.90 + Math.random() * 0.10
       });
       
@@ -359,80 +375,59 @@ export class AIService {
       if (context) {
         prompt = `Context: ${context}\n\nUser: ${message}`;
       }
-    
+
+      const systemMessage = {
+        role: 'system' as const,
+        content: BASE_SYSTEM_PROMPT
+      };
+
       const messages = [
+        systemMessage,
         {
-          role: 'user',
+          role: 'user' as const,
           content: prompt
         }
       ];
       
       console.log('Starting streaming chat response...', { model, messageCount: messages.length });
       
-      const { data, error } = await supabase.functions.invoke('groq-chat', {
-        body: {
-          messages,
-          model,
-          stream: true
-        }
-      });
-
-      if (error) {
-        console.error('Edge function error:', error);
-        throw new Error(`Streaming chat failed: ${error.message}`);
-      }
-
-      // The response should be a ReadableStream for streaming responses
-      if (!data || !data.getReader) {
-        console.error('No stream available in response');
-        throw new Error('No stream reader available');
-      }
-
-      const reader = data.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-
       try {
-        while (true) {
-          const { done, value } = await reader.read();
-          
-          if (done) {
-            console.log('Stream completed');
-            break;
-          }
-          
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
-          
-          for (const line of lines) {
-            if (line.trim() === '') continue;
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6);
-              if (data === '[DONE]') {
-                console.log('Stream finished with [DONE]');
-                return;
-              }
-              
-              try {
-                const parsed = JSON.parse(data);
-                const content = parsed.choices?.[0]?.delta?.content;
-                if (content) {
-                  yield content;
-                }
-              } catch (e) {
-                // Skip malformed JSON
-                console.warn('Skipping malformed JSON:', data);
-                continue;
-              }
-            }
+        // First try to get the full response
+        const fullResponse = await this.callGroqAPI(messages, model);
+        
+        // Stream it token by token for a realistic streaming experience
+        const tokens = fullResponse.split(/(\s+|[.,!?;])/); // Split on whitespace and punctuation
+        
+        for (let i = 0; i < tokens.length; i++) {
+          const token = tokens[i];
+          if (token.trim() === '') {
+            yield token; // Preserve whitespace
+          } else {
+            yield token;
+            // Add realistic delays between tokens
+            await new Promise(resolve => setTimeout(resolve, 25 + Math.random() * 75));
           }
         }
-      } finally {
-        reader.releaseLock();
+      } catch (apiError) {
+        console.error('Direct API call failed, trying fallback:', apiError);
+        
+        // Fallback to word-by-word streaming
+        try {
+          const fallbackResponse = await this.chatWithAI(message, model, context);
+          const words = fallbackResponse.content.split(' ');
+          
+          for (let i = 0; i < words.length; i++) {
+            const word = words[i];
+            await new Promise(resolve => setTimeout(resolve, 40 + Math.random() * 80));
+            yield word + (i < words.length - 1 ? ' ' : '');
+          }
+        } catch (fallbackError) {
+          console.error('All streaming methods failed:', fallbackError);
+          yield `Error: ${fallbackError instanceof Error ? fallbackError.message : 'Chat failed'}`;
+        }
       }
     } catch (error) {
-      console.error('Streaming chat failed:', error);
+      console.error('Streaming chat completely failed:', error);
       yield `Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
     }
   }
