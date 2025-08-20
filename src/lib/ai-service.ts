@@ -42,22 +42,34 @@ export class AIService {
 
   private async uploadImageToStorage(file: File): Promise<string> {
     try {
+      console.log('Starting image upload to storage...', { 
+        fileName: file.name, 
+        fileSize: file.size, 
+        fileType: file.type 
+      });
+      
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `${fileName}`;
+
+      console.log('Uploading to path:', filePath);
 
       const { error: uploadError } = await supabase.storage
         .from('chart-images')
         .upload(filePath, file);
 
       if (uploadError) {
+        console.error('Storage upload error:', uploadError);
         throw uploadError;
       }
+
+      console.log('Upload successful, getting public URL...');
 
       const { data } = supabase.storage
         .from('chart-images')
         .getPublicUrl(filePath);
 
+      console.log('Public URL generated:', data.publicUrl);
       return data.publicUrl;
     } catch (error) {
       console.error('Error uploading image to storage:', error);
@@ -88,6 +100,8 @@ export class AIService {
 
   private async callGroqAPI(messages: any[], model: AIModelType): Promise<string> {
     try {
+      console.log('Calling Groq API via edge function...', { model, messageCount: messages.length });
+      
       const { data, error } = await supabase.functions.invoke('groq-chat', {
         body: {
           messages,
@@ -97,10 +111,11 @@ export class AIService {
       });
 
       if (error) {
-        console.error('Groq API call failed:', error);
+        console.error('Edge function error:', error);
         throw new Error(`Chat failed: ${error.message}`);
       }
 
+      console.log('Groq API response received:', { hasData: !!data, hasChoices: !!data?.choices });
       return data.choices[0]?.message?.content || 'No response generated';
     } catch (error) {
       console.error('Groq API call failed:', error);
@@ -149,8 +164,14 @@ export class AIService {
 
   async uploadAndAnalyzeImage(file: File, model: AIModelType): Promise<{ imageUrl: string; analysis: AnalysisResult[] }> {
     try {
+      console.log('Starting upload and analysis process...', { model });
+      
       const imageUrl = await this.uploadImageToStorage(file);
+      console.log('Image uploaded successfully, starting analysis...');
+      
       const analysis = await this.analyzeChart(imageUrl, model);
+      console.log('Analysis completed successfully', { resultCount: analysis.length });
+      
       return { imageUrl, analysis };
     } catch (error) {
       console.error('Upload and analysis failed:', error);
