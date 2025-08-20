@@ -52,29 +52,8 @@ Flag biases: small N, missing data, censoring, imbalance, confounding if indicat
 
 // Output formatting instructions
 const OUTPUT_INSTRUCTIONS = `
-Respond with (1) prose summary ≤120 words and (2) a JSON block with this exact schema:
-{
-  "chart_type": "",
-  "metric": {"name": "", "unit": ""},
-  "timeframe": {"start": "", "end": "", "frequency": ""},
-  "main_trends": ["..."],
-  "key_values": [
-    {"label": "", "value": 0, "unit": "", "where_in_chart": ""}
-  ],
-  "comparisons": [
-    {"type": "YoY|QoQ|WoW|MoM|vs_target", "from": "", "to": "", "delta_abs": 0, "delta_pct": 0}
-  ],
-  "outliers": [
-    {"point": "", "reason": "", "impact": ""}
-  ],
-  "insights": ["..."],
-  "risks_or_limitations": ["..."],
-  "recommended_actions": ["..."],
-  "assumptions": ["..."],
-  "confidence": "low|medium|high",
-  "follow_up_questions": ["..."]
-}
-If schema fields are unknown, use empty strings or arrays, not guesses.`;
+Respond with a well-formatted prose analysis (≤300 words) organized in clear sections. Do not include JSON or code blocks.
+Structure your response with clear headings and bullet points for easy reading.`;
 
 // Metric calculation formulas
 const METRIC_FORMULAS = `
@@ -285,25 +264,10 @@ export class AIService {
       // Parse the response and create individual results for each question
       const results: AnalysisResult[] = [];
       
-      // Parse the comprehensive analysis and format it
-      let formattedAnalysis = fullAnalysis;
-      try {
-        // Try to extract JSON from the response and format it
-        const jsonMatch = fullAnalysis.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          const analysisData = JSON.parse(jsonMatch[0]) as ChartAnalysis;
-          analysisData.prose_summary = fullAnalysis.split(jsonMatch[0])[0].trim();
-          formattedAnalysis = formatAnalysisMarkdown(analysisData);
-        }
-      } catch (e) {
-        // If JSON parsing fails, use the raw response
-        console.warn('Could not parse JSON from analysis response, using raw format');
-      }
-
-      // Create a comprehensive analysis result
+      // Create a comprehensive analysis result using the prose response
       results.push({
         question: "Comprehensive Chart Analysis",
-        answer: formattedAnalysis,
+        answer: fullAnalysis,
         confidence: 0.90 + Math.random() * 0.10
       });
       
