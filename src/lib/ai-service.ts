@@ -14,12 +14,12 @@ const ANALYSIS_QUESTIONS = [
 // Model configurations for Groq API
 const MODEL_CONFIG = {
   scout: {
-    name: 'llama-3.2-1b-preview',
-    displayName: 'Llama 3.2 1B (Scout)'
+    name: 'meta-llama/llama-4-scout-17b-16e-instruct',
+    displayName: 'Llama 4 Scout (Vision)'
   },
   maverick: {
-    name: 'llama-3.2-3b-preview', 
-    displayName: 'Llama 3.2 3B (Maverick)'
+    name: 'meta-llama/llama-4-maverick-72b-16e-instruct', 
+    displayName: 'Llama 4 Maverick (Vision)'
   }
 } as const;
 
