@@ -1,4 +1,5 @@
 import { AIModelType, AIResponse, AnalysisResult } from '@/types/chart-analysis';
+import { supabase } from '@/integrations/supabase/client';
 
 // Predefined analysis questions for chart analysis
 const ANALYSIS_QUESTIONS = [
@@ -14,37 +15,54 @@ const ANALYSIS_QUESTIONS = [
 // Model configurations for Groq API
 const MODEL_CONFIG = {
   scout: {
-    name: 'meta-llama/llama-4-scout-17b-16e-instruct',
-    displayName: 'Llama 4 Scout (Vision)'
+    name: 'llama-3.2-11b-vision-preview',
+    displayName: 'Llama 3.2 11B Vision (Scout)'
   },
   maverick: {
-    name: 'meta-llama/llama-4-maverick-17b-128e-instruct', 
-    displayName: 'Llama 4 Maverick (Vision)'
+    name: 'llama-3.2-90b-vision-preview', 
+    displayName: 'Llama 3.2 90B Vision (Maverick)'
   }
 } as const;
 
-// Real AI service using Groq API
+// AI service using Supabase edge functions
 export class AIService {
-  private readonly baseUrl = 'https://api.groq.com/openai/v1/chat/completions';
   private apiKey: string | null = null;
 
   constructor() {
-    // In a real app, this would come from environment variables
-    // For now, we'll use a placeholder and handle the API key dynamically
     this.apiKey = null;
-  }
-
-  private async getApiKey(): Promise<string> {
-    if (!this.apiKey) {
-      // In Lovable, the API key is stored in Supabase secrets
-      // For development, you can set it via environment or prompt user
-      throw new Error('Groq API key not configured. Please set GROQ_API_KEY in your environment.');
-    }
-    return this.apiKey;
   }
 
   public setApiKey(key: string) {
     this.apiKey = key;
+  }
+
+  public hasApiKey(): boolean {
+    return !!this.apiKey;
+  }
+
+  private async uploadImageToStorage(file: File): Promise<string> {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('chart-images')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const { data } = supabase.storage
+        .from('chart-images')
+        .getPublicUrl(filePath);
+
+      return data.publicUrl;
+    } catch (error) {
+      console.error('Error uploading image to storage:', error);
+      throw new Error('Failed to upload image');
+    }
   }
 
   private async convertImageToBase64(imageUrl: string): Promise<string> {
@@ -70,29 +88,19 @@ export class AIService {
 
   private async callGroqAPI(messages: any[], model: AIModelType): Promise<string> {
     try {
-      const apiKey = await this.getApiKey();
-      const modelName = MODEL_CONFIG[model].name;
-      
-      const response = await fetch(this.baseUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: modelName,
+      const { data, error } = await supabase.functions.invoke('groq-chat', {
+        body: {
           messages,
-          max_tokens: 1000,
-          temperature: 0.3,
-        }),
+          model,
+          stream: false
+        }
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(`Groq API error: ${response.status} ${response.statusText} - ${errorData.error?.message || 'Unknown error'}`);
+      if (error) {
+        console.error('Groq API call failed:', error);
+        throw new Error(`Chat failed: ${error.message}`);
       }
 
-      const data = await response.json();
       return data.choices[0]?.message?.content || 'No response generated';
     } catch (error) {
       console.error('Groq API call failed:', error);
@@ -136,6 +144,17 @@ export class AIService {
     } catch (error) {
       console.error('Chart analysis failed:', error);
       throw new Error(`Failed to analyze chart: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  async uploadAndAnalyzeImage(file: File, model: AIModelType): Promise<{ imageUrl: string; analysis: AnalysisResult[] }> {
+    try {
+      const imageUrl = await this.uploadImageToStorage(file);
+      const analysis = await this.analyzeChart(imageUrl, model);
+      return { imageUrl, analysis };
+    } catch (error) {
+      console.error('Upload and analysis failed:', error);
+      throw new Error(`Failed to upload and analyze image: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
   
@@ -197,7 +216,7 @@ export class AIService {
       yield `Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
     }
   }
-  
+
   async quickAnalysis(imageUrl: string, model: AIModelType): Promise<string> {
     try {
       const base64Image = await this.convertImageToBase64(imageUrl);
@@ -223,6 +242,16 @@ export class AIService {
       return await this.callGroqAPI(messages, model);
     } catch (error) {
       console.error('Quick analysis failed:', error);
+      throw new Error(`Quick analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  async quickAnalysisFromFile(file: File, model: AIModelType): Promise<string> {
+    try {
+      const imageUrl = await this.uploadImageToStorage(file);
+      return await this.quickAnalysis(imageUrl, model);
+    } catch (error) {
+      console.error('Quick analysis from file failed:', error);
       throw new Error(`Quick analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }

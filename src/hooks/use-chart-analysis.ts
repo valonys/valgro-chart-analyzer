@@ -38,20 +38,72 @@ export const useChartAnalysis = () => {
     setState(prev => ({ ...prev, selectedModel: model.id }));
   }, []);
 
-  const uploadImage = useCallback((file: File) => {
-    const imageUrl = URL.createObjectURL(file);
-    const uploadedImage: UploadedImage = {
-      file,
-      url: imageUrl,
-      id: Date.now().toString()
-    };
+  const uploadImage = useCallback(async (file: File) => {
+    setState(prev => ({ ...prev, isProcessing: true }));
     
-    setState(prev => ({ ...prev, uploadedImage }));
-    toast({
-      title: "Image uploaded successfully",
-      description: "Your chart is ready for analysis"
-    });
-  }, [toast]);
+    try {
+      // Upload and analyze the image
+      const result = await aiService.uploadAndAnalyzeImage(file, state.selectedModel);
+      
+      // Create analysis entry
+      const analysis: Analysis = {
+        id: Date.now().toString(),
+        imageUrl: result.imageUrl,
+        results: result.analysis,
+        timestamp: new Date(),
+        model: state.selectedModel
+      };
+
+      // Add to vector store
+      const analysisContent = result.analysis.map(r => `${r.question}: ${r.answer}`).join('\n');
+      const document: Document = {
+        id: analysis.id,
+        content: analysisContent,
+        metadata: {
+          timestamp: new Date(),
+          analysis_id: analysis.id,
+          type: 'analysis'
+        }
+      };
+      vectorStore.addDocument(document);
+
+      // Add to chat history
+      const userMessage: ChatMessage = {
+        id: Date.now().toString(),
+        role: 'user',
+        content: 'I\'ve uploaded an image. Can you analyze this chart for me?',
+        timestamp: new Date(),
+        imageUrl: result.imageUrl
+      };
+      
+      const aiMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `I've analyzed your chart image. Here are the key insights I found:\n\n${result.analysis.map(r => `**${r.question}**\n${r.answer}\n`).join('\n')}`,
+        timestamp: new Date()
+      };
+
+      setState(prev => ({
+        ...prev,
+        currentAnalysis: analysis,
+        analysisHistory: [analysis, ...prev.analysisHistory],
+        chatHistory: [...prev.chatHistory, userMessage, aiMessage],
+        isProcessing: false
+      }));
+
+      toast({
+        title: "Upload and analysis complete",
+        description: `Chart analyzed using ${state.selectedModel === 'scout' ? 'Scout' : 'Maverick'} model`
+      });
+    } catch (error) {
+      setState(prev => ({ ...prev, isProcessing: false }));
+      toast({
+        title: "Upload Failed",
+        description: error instanceof Error ? error.message : "Failed to upload and analyze image",
+        variant: "destructive"
+      });
+    }
+  }, [state.selectedModel, toast]);
 
   const analyzeChart = useCallback(async () => {
     if (!state.uploadedImage) return;
