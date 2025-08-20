@@ -68,9 +68,6 @@ export const ChatInterface = ({
       
       // Upload the image (just upload, don't analyze yet)
       await onImageUpload(file);
-      
-      // Set a default message for the user
-      setMessage("Can you analyze this chart for me?");
     } catch (error) {
       console.error('Error uploading image:', error);
       setUploadedImagePreview(null);
