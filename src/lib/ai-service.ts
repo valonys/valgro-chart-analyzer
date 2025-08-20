@@ -40,58 +40,53 @@ export class AIService {
     return !!this.apiKey;
   }
 
-  private async uploadImageToStorage(file: File): Promise<string> {
+  private async processImageFile(file: File): Promise<string> {
     try {
-      console.log('Starting image upload to storage...', { 
+      console.log('Processing image file directly as base64...', { 
         fileName: file.name, 
         fileSize: file.size, 
         fileType: file.type 
       });
       
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `${fileName}`;
-
-      console.log('Uploading to path:', filePath);
-
-      const { error: uploadError } = await supabase.storage
-        .from('chart-images')
-        .upload(filePath, file);
-
-      if (uploadError) {
-        console.error('Storage upload error:', uploadError);
-        throw uploadError;
-      }
-
-      console.log('Upload successful, getting public URL...');
-
-      const { data } = supabase.storage
-        .from('chart-images')
-        .getPublicUrl(filePath);
-
-      console.log('Public URL generated:', data.publicUrl);
-      return data.publicUrl;
-    } catch (error) {
-      console.error('Error uploading image to storage:', error);
-      throw new Error('Failed to upload image');
-    }
-  }
-
-  private async convertImageToBase64(imageUrl: string): Promise<string> {
-    try {
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onloadend = () => {
-          const base64 = reader.result as string;
-          // Remove data:image/...;base64, prefix
-          const base64Data = base64.split(',')[1];
-          resolve(base64Data);
+          const result = reader.result as string;
+          console.log('Image converted to base64 successfully');
+          resolve(result);
         };
         reader.onerror = reject;
-        reader.readAsDataURL(blob);
+        reader.readAsDataURL(file);
       });
+    } catch (error) {
+      console.error('Error processing image file:', error);
+      throw new Error('Failed to process image');
+    }
+  }
+
+  private async convertImageToBase64(imageDataUrl: string): Promise<string> {
+    try {
+      if (imageDataUrl.startsWith('data:')) {
+        // Already a data URL, extract base64 part
+        const base64Data = imageDataUrl.split(',')[1];
+        console.log('Using existing base64 data');
+        return base64Data;
+      } else {
+        // It's a regular URL, fetch and convert
+        console.log('Fetching image from URL:', imageDataUrl);
+        const response = await fetch(imageDataUrl);
+        const blob = await response.blob();
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64 = reader.result as string;
+            const base64Data = base64.split(',')[1];
+            resolve(base64Data);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      }
     } catch (error) {
       console.error('Error converting image to base64:', error);
       throw new Error('Failed to process image');
@@ -123,9 +118,9 @@ export class AIService {
     }
   }
   
-  async analyzeChart(imageUrl: string, model: AIModelType): Promise<AnalysisResult[]> {
+  async analyzeChart(imageDataUrl: string, model: AIModelType): Promise<AnalysisResult[]> {
     try {
-      const base64Image = await this.convertImageToBase64(imageUrl);
+      const base64Image = await this.convertImageToBase64(imageDataUrl);
       const results: AnalysisResult[] = [];
       
       for (const question of ANALYSIS_QUESTIONS) {
@@ -166,13 +161,14 @@ export class AIService {
     try {
       console.log('Starting upload and analysis process...', { model });
       
-      const imageUrl = await this.uploadImageToStorage(file);
-      console.log('Image uploaded successfully, starting analysis...');
+      // Process image file directly as base64 data URL
+      const imageDataUrl = await this.processImageFile(file);
+      console.log('Image processed successfully, starting analysis...');
       
-      const analysis = await this.analyzeChart(imageUrl, model);
+      const analysis = await this.analyzeChart(imageDataUrl, model);
       console.log('Analysis completed successfully', { resultCount: analysis.length });
       
-      return { imageUrl, analysis };
+      return { imageUrl: imageDataUrl, analysis };
     } catch (error) {
       console.error('Upload and analysis failed:', error);
       throw new Error(`Failed to upload and analyze image: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -238,9 +234,9 @@ export class AIService {
     }
   }
 
-  async quickAnalysis(imageUrl: string, model: AIModelType): Promise<string> {
+  async quickAnalysis(imageDataUrl: string, model: AIModelType): Promise<string> {
     try {
-      const base64Image = await this.convertImageToBase64(imageUrl);
+      const base64Image = await this.convertImageToBase64(imageDataUrl);
       
       const messages = [
         {
@@ -269,8 +265,8 @@ export class AIService {
 
   async quickAnalysisFromFile(file: File, model: AIModelType): Promise<string> {
     try {
-      const imageUrl = await this.uploadImageToStorage(file);
-      return await this.quickAnalysis(imageUrl, model);
+      const imageDataUrl = await this.processImageFile(file);
+      return await this.quickAnalysis(imageDataUrl, model);
     } catch (error) {
       console.error('Quick analysis from file failed:', error);
       throw new Error(`Quick analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
