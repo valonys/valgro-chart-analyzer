@@ -66,13 +66,11 @@ export const ChatInterface = ({
       const previewUrl = URL.createObjectURL(file);
       setUploadedImagePreview(previewUrl);
       
-      // Add a realistic delay to show loading state
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Upload the image (just upload, don't analyze yet)
+      await onImageUpload(file);
       
-      // Upload the image
-      onImageUpload(file);
-      
-      // Image uploaded successfully - user can choose what to ask
+      // Set a default message for the user
+      setMessage("Can you analyze this chart for me?");
     } catch (error) {
       console.error('Error uploading image:', error);
       setUploadedImagePreview(null);

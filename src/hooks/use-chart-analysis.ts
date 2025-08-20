@@ -44,73 +44,31 @@ export const useChartAnalysis = () => {
   }, []);
 
   const uploadImage = useCallback(async (file: File) => {
-    setState(prev => ({ ...prev, isProcessing: true }));
-    
     try {
-      // Upload and analyze the image with domain-specific analysis
-      const result = await aiService.uploadAndAnalyzeImage(file, state.selectedModel, state.selectedDomain);
+      // Just upload the image for preview, don't analyze yet
+      const result = await aiService.uploadImage(file);
       
-      // Create analysis entry
-      const analysis: Analysis = {
-        id: Date.now().toString(),
-        imageUrl: result.imageUrl,
-        results: result.analysis,
-        timestamp: new Date(),
-        model: state.selectedModel,
-        domain: state.selectedDomain
-      };
-
-      // Add to vector store
-      const analysisContent = result.analysis.map(r => `${r.question}: ${r.answer}`).join('\n');
-      const document: Document = {
-        id: analysis.id,
-        content: analysisContent,
-        metadata: {
-          timestamp: new Date(),
-          analysis_id: analysis.id,
-          type: 'analysis',
-          domain: state.selectedDomain
-        }
-      };
-      vectorStore.addDocument(document);
-
-      // Add to chat history
-      const userMessage: ChatMessage = {
-        id: Date.now().toString(),
-        role: 'user',
-        content: `I've uploaded an image for ${state.selectedDomain} analysis. Can you analyze this chart for me?`,
-        timestamp: new Date(),
-        imageUrl: result.imageUrl
-      };
-      
-      const aiMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: `I've analyzed your chart image using ${state.selectedDomain} domain expertise. Here are the key insights I found:\n\n${result.analysis.map(r => `**${r.question}**\n${r.answer}\n`).join('\n')}`,
-        timestamp: new Date()
+      const uploadedImage: UploadedImage = {
+        file,
+        url: result.imageUrl,
+        id: Date.now().toString()
       };
 
       setState(prev => ({
         ...prev,
-        currentAnalysis: analysis,
-        analysisHistory: [analysis, ...prev.analysisHistory],
-        chatHistory: [...prev.chatHistory, userMessage, aiMessage],
-        isProcessing: false
+        uploadedImage
       }));
 
-      toast({
-        title: "Upload and analysis complete",
-        description: `Chart analyzed using ${state.selectedModel === 'scout' ? 'Scout' : 'Maverick'} model with ${state.selectedDomain} expertise`
-      });
+      return result.imageUrl;
     } catch (error) {
-      setState(prev => ({ ...prev, isProcessing: false }));
       toast({
-        title: "Upload Failed",
-        description: error instanceof Error ? error.message : "Failed to upload and analyze image",
+        title: "Upload Failed", 
+        description: error instanceof Error ? error.message : "Failed to upload image",
         variant: "destructive"
       });
+      throw error;
     }
-  }, [state.selectedModel, state.selectedDomain, toast]);
+  }, [toast]);
 
   const analyzeChart = useCallback(async () => {
     if (!state.uploadedImage) return;
@@ -254,7 +212,14 @@ export const useChartAnalysis = () => {
 
       let fullResponse = '';
       
-      for await (const token of aiService.streamChatResponse(message, state.selectedModel, context)) {
+      for await (const token of aiService.streamChatResponse(
+        message, 
+        state.chatHistory, 
+        state.selectedModel, 
+        state.selectedDomain, 
+        context, 
+        state.uploadedImage?.url
+      )) {
         fullResponse += token;
         onToken(token);
       }

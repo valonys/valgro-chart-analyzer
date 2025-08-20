@@ -179,6 +179,25 @@ export class AIService {
     }
   }
 
+  // Simple image upload without analysis - just creates a data URL
+  async uploadImage(file: File): Promise<{ imageUrl: string }> {
+    try {
+      console.log('Uploading image file...', { 
+        fileName: file.name, 
+        fileSize: file.size, 
+        fileType: file.type 
+      });
+      
+      const imageDataUrl = await this.processImageFile(file);
+      console.log('Image upload completed successfully');
+      
+      return { imageUrl: imageDataUrl };
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      throw new Error('Failed to upload image');
+    }
+  }
+
   private async convertImageToBase64(imageDataUrl: string): Promise<string> {
     try {
       if (imageDataUrl.startsWith('data:')) {
@@ -288,34 +307,6 @@ export class AIService {
         confidence: 0.90 + Math.random() * 0.10
       });
       
-      // Also provide individual question results for backward compatibility
-      for (const question of ANALYSIS_QUESTIONS) {
-        const questionMessages = [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: `${BASE_SYSTEM_PROMPT}\n\n${question}\n\nPlease be specific and quantitative in your analysis.`
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: `data:image/jpeg;base64,${base64Image}`
-                }
-              }
-            ]
-          }
-        ];
-        
-        const answer = await this.callGroqAPI(questionMessages, model);
-        results.push({
-          question,
-          answer,
-          confidence: 0.85 + Math.random() * 0.15
-        });
-      }
-      
       return results;
     } catch (error) {
       console.error('Chart analysis failed:', error);
@@ -369,20 +360,25 @@ export class AIService {
     }
   }
 
-  async *streamChatResponse(message: string, model: AIModelType, context?: string): AsyncGenerator<string, void, unknown> {
+  async *streamChatResponse(
+    message: string, 
+    chatHistory: any[], 
+    model: AIModelType, 
+    domain: 'business' | 'industrial' | 'medical' = 'business',
+    context?: string,
+    imageUrl?: string
+  ): AsyncGenerator<string, void, unknown> {
     try {
       let prompt = message;
       if (context) {
         prompt = `Context: ${context}\n\nUser: ${message}`;
       }
 
-      const systemMessage = {
-        role: 'system' as const,
-        content: BASE_SYSTEM_PROMPT
-      };
-
       const messages = [
-        systemMessage,
+        {
+          role: 'system' as const,
+          content: BASE_SYSTEM_PROMPT
+        },
         {
           role: 'user' as const,
           content: prompt
@@ -429,110 +425,6 @@ export class AIService {
     } catch (error) {
       console.error('Streaming chat completely failed:', error);
       yield `Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
-    }
-  }
-
-  async quickAnalysis(imageDataUrl: string, model: AIModelType, domain: 'business' | 'industrial' | 'medical' = 'business'): Promise<string> {
-    try {
-      const base64Image = await this.convertImageToBase64(imageDataUrl);
-      
-      // Use comprehensive prompt system for quick analysis
-      const quickPrompt = buildChartPrompt({
-        userGoal: "Provide a concise but comprehensive analysis with key insights and trends",
-        domain
-      });
-      
-      const messages = [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: quickPrompt
-            },
-            {
-              type: 'image_url',
-              image_url: {
-                url: `data:image/jpeg;base64,${base64Image}`
-              }
-            }
-          ]
-        }
-      ];
-      
-      return await this.callGroqAPI(messages, model);
-    } catch (error) {
-      console.error('Quick analysis failed:', error);
-      throw new Error(`Quick analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  async quickAnalysisFromFile(file: File, model: AIModelType, domain: 'business' | 'industrial' | 'medical' = 'business'): Promise<string> {
-    try {
-      const imageDataUrl = await this.processImageFile(file);
-      return await this.quickAnalysis(imageDataUrl, model, domain);
-    } catch (error) {
-      console.error('Quick analysis from file failed:', error);
-      throw new Error(`Quick analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  async domainSpecificAnalysis(imageDataUrl: string, model: AIModelType, {
-    domain,
-    userGoal,
-    chartTitle,
-    xAxis,
-    yAxis,
-    units,
-    timeframe,
-    notes
-  }: {
-    domain: 'business' | 'industrial' | 'medical';
-    userGoal?: string;
-    chartTitle?: string;
-    xAxis?: string;
-    yAxis?: string;
-    units?: string;
-    timeframe?: string;
-    notes?: string;
-  }): Promise<string> {
-    try {
-      const base64Image = await this.convertImageToBase64(imageDataUrl);
-      
-      // Use detailed prompt with all context
-      const detailedPrompt = buildChartPrompt({
-        userGoal: userGoal || `Provide detailed ${domain} analysis`,
-        domain,
-        chartTitle,
-        xAxis,
-        yAxis,
-        units,
-        timeframe,
-        notes
-      });
-      
-      const messages = [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: detailedPrompt
-            },
-            {
-              type: 'image_url',
-              image_url: {
-                url: `data:image/jpeg;base64,${base64Image}`
-              }
-            }
-          ]
-        }
-      ];
-      
-      return await this.callGroqAPI(messages, model);
-    } catch (error) {
-      console.error('Domain-specific analysis failed:', error);
-      throw new Error(`Domain-specific analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 }
